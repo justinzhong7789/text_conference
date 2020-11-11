@@ -13,15 +13,15 @@
 
 
 void writeToDatabase(char *username, char *password);
-
+int checkPW(char *username, char *inputpw);
 
 char DATABASE[] = "database.txt"; 
 int CHAR_SIZE = 1;
 
 
 
-//write a new line to databasefile (create this file if it does not exist), in the formate
-// username password
+//write a new line to databasefile (create this file if it does not exist), in the format:
+//<username> <password>
 void writeToDatabase(char *username, char *password){
     FILE *dbfile = fopen(DATABASE, "a");
     if(dbfile == NULL){
@@ -35,28 +35,45 @@ void writeToDatabase(char *username, char *password){
 }
 
 
+
 // if username entered if not found, return -2,
 // if password is incorrect, return -1
 // if password is correnct,  return 0
 int checkPW(char *username, char *inputpw){
-    FILE *dbfile = fopen(DATABASE, "w");
+    FILE *dbfile = fopen(DATABASE, "r");
+    rewind(dbfile);
+    if(dbfile == NULL){
+        printf("dbfile is NULL\n");
+    }
     size_t buf_size = 50;
-    char buffer[buf_size];
-    while (!feof(dbfile))
-    {   
-        getline(&buffer, &buf_size, dbfile);
+    char *buffer = (char *)malloc(buf_size);
+    while ((getline(&buffer, &buf_size, dbfile)!=-1)){
+
+        if(buffer[strlen(buffer)-1] == '\n'){
+            buffer[strlen(buffer)-1] = '\0';
+        }
         char delim = ' ';
-        char *token = strtok(buffer, delim);
+        char *token = strtok(buffer, &delim);
         if(strcmp(token, username) ==0){
-            token = strtok(NULL, delim);
+            token = strtok(NULL, &delim);
             if(strcmp(token, inputpw)==0){
+                printf("Login credentials match!\n");
+                free(buffer);
+                fclose(dbfile);
                 return 0;
             }
             else{
+                printf("Login credentials do not match!\n");
+                fclose(dbfile);
+                free(buffer);
                 return -1;
             }
         }
+        
     }
+    printf("Your login username is not found in the database!\n");
+    fclose(dbfile);
+    free(buffer);
     return -2;
 
 }
