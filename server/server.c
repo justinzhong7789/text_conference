@@ -11,10 +11,9 @@
 #include <stdbool.h>
 #include <time.h>
 
+#include "server.h"
 int main(int argc, char** argv){
-    
-
-
-
-    return 0;
+	int sockfd = initSetup(argv[0]);
+	
+	return 0;
 }

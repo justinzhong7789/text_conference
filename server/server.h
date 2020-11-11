@@ -10,14 +10,15 @@
 #include <netdb.h>
 #include <stdbool.h>
 #include <time.h>
-
+#include <signal.h>
+#include <sys/wait.h>
+#define DATABASE "database_txt"
+#define CHAR_SIZE 1
+#define BACK_LOG 10
 
 void writeToDatabase(char *username, char *password);
 int checkPW(char *username, char *inputpw);
-
-char DATABASE[] = "database.txt"; 
-int CHAR_SIZE = 1;
-
+void sigchild_handler(int s);
 
 
 //write a new line to databasefile (create this file if it does not exist), in the format:
@@ -35,11 +36,11 @@ void writeToDatabase(char *username, char *password){
 }
 
 
-
 // if username entered if not found, return -2,
 // if password is incorrect, return -1
 // if password is correnct,  return 0
 int checkPW(char *username, char *inputpw){
+
     FILE *dbfile = fopen(DATABASE, "r");
     rewind(dbfile);
     if(dbfile == NULL){
@@ -76,4 +77,62 @@ int checkPW(char *username, char *inputpw){
     free(buffer);
     return -2;
 
+}
+
+
+//does the initialization setup of the server
+//takes care of: socket(), setsockopt(), bind(), listen(), and sigchld_handler()
+int initSetup(char *portNum){
+	struct addrinfo hints, *serveinfo, *p;
+	struct sigaction sa;
+	int rv, sockfd, yes=1;
+
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+
+	if((rv = getaddrinfo(NULL, portNum, &hints, &serveinfo)) != 0 ){
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+	}
+	for(p = serveinfo; p!= NULL; p=p->ai_next){
+		if((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1){
+			perror("server: socket");
+			continue;
+		}
+		if((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes)) == -1){
+			perror("setsockopt");
+			exit(1);
+		}
+
+		if((bind(sockfd, p->ai_addr, p->ai_addrlen)) == -1){
+			close(sockfd);
+			perror("server: bind");
+			continue;
+		}
+		break;
+	}
+	freeaddrinfo(serveinfo);
+	if(p == NULL){
+		fprintf(stderr, "server: failed to bind\n");
+		exit(1);
+	}
+	if(listen(sockfd, BACK_LOG) == -1){
+        perror("listen");
+        exit(1);
+    }
+    sa.sa_handler = sigchild_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    if(sigaction(SIGCHLD, &sa, NULL) == -1){
+        perror("sigaction");
+        exit(1);
+    }
+    return sockfd;
+}
+
+void sigchild_handler(int s){
+    int saved_errno = errno;
+    while(waitpid(-1, NULL, WNOHANG) >0);
+    errno = saved_errno;
 }
