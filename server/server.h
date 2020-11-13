@@ -188,3 +188,43 @@ void free_linked_list(connected_client **head){
     free(head);
 }
 
+void freeNode(connected_client *to_del){
+    free(to_del->user_id);
+    free(to_del);
+}
+
+
+//returns true on success
+//        false if user_id not found
+bool deleteNode(connected_client **list, char *user_id_){
+    connected_client *p, *c, *t = *list;
+    if(*list == NULL){
+        //list is empty
+        return false;
+    }
+    t = *list;
+    if(strcmp((*list)->user_id, user_id_) == 0){
+        *list = (*list)->next;
+        freeNode(t);
+        return true;
+    }
+    else{
+        while(t != NULL){
+            p = t;
+            t = t->next;
+            if(strcmp(t->user_id, user_id_) == 0){
+                break;
+            }
+        }
+        if(t == NULL){
+            //node not found
+            return false;
+        }
+        
+        c = t->next;
+        p->next = c;
+        freeNode(t);
+        return true;
+    }
+}
+

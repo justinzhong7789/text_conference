@@ -64,16 +64,23 @@ int main(int argc, char** argv){
 							if(buffer.type == LOGIN){
 								int check_pw = checkPW(buffer.user_id, buffer.data);
 								message response;
-								if(check_pw == -2 || check_pw == -1){
-									//username is not found in the database, or password in incorrect
+								if(check_pw == -2){
+									//username is not found in the database
 									//send NACK
 									response.type = LO_NAK;
 									strcpy(response.source, SERVER);
+									strcpy(response.data, "Username not found\n");
+								}
+								else if(check_pw == -1){
+									response.type = LO_NAK;
+									strcpy(response.source, SERVER);
+									strcpy(response.data, "Login credentials don't match\n");
 								}
 								else if(check_pw == 0){
 									//pw is correct, send ack
 									response.type = LO_ACK;
 									strcpy(response.source, SERVER);
+									strcpy(response.data, "Login success\n");
 								}
 								send(new_fd, &response, sizeof(message), 0);
 							}
@@ -82,13 +89,49 @@ int main(int argc, char** argv){
 							perror("recv\n");
 						}
 					}
-					
-
 				}
 				else{
 					//data from an already connected client
+					message buffer;
+					int numbytes = recv(i, &message, sizeof(message), 0);
+					if(numbytes == -1){
+						perror("recv from old connections error\n");
+					}
+					else{
+						if(buffer.type == EXIT){
+							connected_client *p;
+							for(p = *connected_clients_list; p!= NULL;p = p->next){
+								if(strcmp(message.souce, p->user_id) == 0){
+									break;
+								}
+							}
+							close(p->fd);
+							int deleted_fd = p->fd;
+							if(deleteNode(connected_clients_list, p->user_id)){
+								//deletion success
+								printf("Socket fd: %d successfully closed\n", deleted_fd);
+							}
+						}
+						else if(buffer.type == JOIN){
+							
+						}
+						else if(buffer.type == LEAVE_SESS){
+							
+						}
+						else if(buffer.type == NEW_SESS){
+							
+						}
+						else if(buffer.type == MESSAGE){
+							
+						}
+						else if(buffer.type == QUERY){
+							
+						}
+						else {
+							perror("Message type not recognized");
+						}
+					}
 
-					
 
 				}
 			}

@@ -18,7 +18,7 @@ int main(int argc, char** argv){
     char buffer[BUFFER_SIZE];
 
     prompt_userinput(buffer, &BUFFER_SIZE);
-    while(buffer != QUIT){
+    while(buffer != QUIT_COMMAND){
         int arg = 0;
         char *command;
         command = strtok(buffer, SPACE);
