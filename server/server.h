@@ -12,13 +12,27 @@
 #include <time.h>
 #include <signal.h>
 #include <sys/wait.h>
+
+#include "../message.h"
+
 #define DATABASE "database_txt"
 #define CHAR_SIZE 1
 #define BACK_LOG 10
-
+#define SERVER "SERVER"
 void writeToDatabase(char *username, char *password);
 int checkPW(char *username, char *inputpw);
 void sigchild_handler(int s);
+int S_initSetup(char *portNum);
+
+//a linked list structure to help keep track of connections on the server side
+typedef struct connected_client{
+    char *user_id;
+    int fd;
+    struct sockaddr_storage client_info;
+    struct connected_client *next;
+}connected_client;
+
+
 
 
 //write a new line to databasefile (create this file if it does not exist), in the format:
@@ -82,7 +96,7 @@ int checkPW(char *username, char *inputpw){
 
 //does the initialization setup of the server
 //takes care of: socket(), setsockopt(), bind(), listen(), and sigchld_handler()
-int initSetup(char *portNum){
+int S_initSetup(char *portNum){
 	struct addrinfo hints, *serveinfo, *p;
 	struct sigaction sa;
 	int rv, sockfd, yes=1;
@@ -131,8 +145,46 @@ int initSetup(char *portNum){
     return sockfd;
 }
 
+//sigchld handling helper function
 void sigchild_handler(int s){
     int saved_errno = errno;
     while(waitpid(-1, NULL, WNOHANG) >0);
     errno = saved_errno;
 }
+
+
+connected_client *create_client(int fd_, struct sockaddr_storage storage_){
+    connected_client *new_node = (connected_client *)malloc(sizeof(connected_client));
+    new_node ->fd = fd_;
+    new_node->user_id = (char *)malloc(MAX_NAME);
+    new_node->client_info = storage_;
+    new_node->next = NULL;
+    return new_node;
+}
+
+//takes the new node generated everytime we accept() a connection and insert into our connected_client
+//linked list to keep track
+void registerClient(connected_client **linked_list_head, connected_client *new_node){
+    connected_client *p = *linked_list_head;
+    if(p == NULL){
+        linked_list_head = new_node;
+    }
+    else{
+        while(p->next != NULL){
+            p = p->next;
+        }
+        p->next = new_node;
+    }
+}
+
+void free_linked_list(connected_client **head){
+    connected_client *p, *t = *head;
+    while(t!= NULL){
+        p = t;
+        t=t->next;
+        free(p->user_id);
+        free(p);
+    }
+    free(head);
+}
+

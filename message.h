@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include <time.h>
 
+#define MAX_NAME 100
+#define MAX_DATA 1000
 
 typedef struct message {
     unsigned int type;
@@ -18,6 +20,8 @@ typedef struct message {
     unsigned char source[MAX_NAME];
     unsigned char data[MAX_DATA];
 } message;
+
+
 
 enum type{
     LOGIN = 0,
@@ -33,4 +37,5 @@ enum type{
     MESSAGE,
     QUERY,
     QU_ACK
-}
+};
+
