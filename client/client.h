@@ -31,11 +31,6 @@ char LOGIN_COMMAND[] = "/login",
 	 LIST_COMMAND[] = "/list";
 
 
-void print(int a){
-	for(int i=0;i<a;i++){
-		printf("\t");
-	}
-}
 
 void prompt(){
 	printf("\t>>>");

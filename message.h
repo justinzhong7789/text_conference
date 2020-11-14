@@ -41,3 +41,10 @@ enum type{
     QU_ACK
 };
 
+void print_t(int a);
+
+void print_t(int a){
+	for(int i=0;i<a;i++){
+		printf("\t");
+	}
+}

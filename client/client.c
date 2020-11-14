@@ -23,13 +23,13 @@ int main(int argc, char** argv){
         int arg = 0;
         char *command, place_holder[BUFFER_SIZE];
         strcpy(place_holder, buffer);
-        command = strtok(place_holder, SPACE);
+        command = strtok(place_holder, &SPACE);
         arg++;
         
         //LOGIN = request to establish connection + checking password on server side
         if(command == LOGIN_COMMAND){
             char *ID, *PW, *S_IP, *PORT, *argument;
-            argument = strtok(NULL, SPACE);
+            argument = strtok(NULL, &SPACE);
             arg++;
             while (argument != NULL)
             {
@@ -45,7 +45,7 @@ int main(int argc, char** argv){
                 else if(arg == 5){
                     PORT = argument;
                 }
-                argument = strtok(NULL, SPACE);
+                argument = strtok(NULL, &SPACE);
                 if(argument != NULL){
                     arg++;
                 }
@@ -73,14 +73,14 @@ int main(int argc, char** argv){
             sockfd = -1;
         }
         else if(command == JOIN_SESSION_COMMAND){
-            char *session_name = strtok(NULL, SPACE);
+            char *session_name = strtok(NULL, &SPACE);
         }
         else if(command == LEAVE_SESSION_COMMAND){
 
 
         }
         else if(command == CREATE_SESSION_COMMAND){
-            char *session_name = strtok(NULL, SPACE);
+            char *session_name = strtok(NULL, &SPACE);
 
         }
         else if(command == LIST_COMMAND){

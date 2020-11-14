@@ -38,7 +38,7 @@ int main(int argc, char** argv){
 	while (1)
 	{
 		read_fds = master;
-		if(select(fdmax+1, &read_fds, NULL, NULL,NULL) == -1{
+		if(select(fdmax+1, &read_fds, NULL, NULL,NULL) == -1){
 			perror("select");
 			exit(4);
 		}
@@ -54,30 +54,29 @@ int main(int argc, char** argv){
 					else{
 						printf("New connection established.");
 						message buffer;
-						int numBytes = recv(new_fd, &buffer, sizeof(message),0);
+						int numBytes = recv(new_fd, &buffer, sizeof buffer,0);
 						if(numBytes != -1){
 							connected_client *new_client = create_client(new_fd, income_addr);
-							strcpy(new_client->user_id, buffer.user_id);
+							strcpy(new_client->user_id, (char*)buffer.source);
 							registerClient(connected_clients_list, new_client);
 							if(buffer.type == LOGIN){
-								int check_pw = checkPW(buffer.user_id, buffer.data);
+								int check_pw = checkPW((char *)buffer.source, (char *)buffer.data);
 								message response;
 								if(check_pw == 0){
 									//pw is correct, send ACK, keep connection
 									response.type = LO_ACK;
-									strcpy(response.source, SERVER);
-									strcpy(response.data, "Login success\n");
+									strcpy((char *)response.source, SERVER);
+									strcpy((char *)response.data, "Login success\n");
 									send(new_fd, &response, sizeof(message), 0);
 									FD_SET(new_fd, &master);
-									fdmax = max(new_fd, fdmax);
-								}
+									fdmax = (new_fd>fdmax)? new_fd: fdmax;								}
 								else{
 									//username is not found in the database
 									//send NACK
 									response.type = LO_NAK;
-									strcpy(response.source, SERVER);
-									(check_pw == -2) ? strcpy(response.data, "Username not found\n") :
-													  strcpy(response.data, "Login credentials don't match\n");
+									strcpy((char *)response.source, SERVER);
+									(check_pw == -2) ? strcpy((char *)response.data, "Username not found\n") :
+													   strcpy((char *)response.data, "Login credentials don't  match\n");
 									send(new_fd, &response, sizeof(message), 0);
 									close(new_fd);
 								}
@@ -91,7 +90,7 @@ int main(int argc, char** argv){
 				else{
 					//data from an already connected client
 					message buffer;
-					int numbytes = recv(i, &message, sizeof(message), 0);
+					int numbytes = recv(i, &buffer, sizeof(message), 0);
 					if(numbytes == -1){
 						perror("recv from old connections error\n");
 					}
@@ -99,7 +98,7 @@ int main(int argc, char** argv){
 						if(buffer.type == EXIT){
 							connected_client *p;
 							for(p = *connected_clients_list; p!= NULL;p = p->next){
-								if(strcmp(message.souce, p->user_id) == 0){
+								if(strcmp((char *)buffer.source, p->user_id) == 0){
 									break;
 								}
 							}
@@ -126,7 +125,7 @@ int main(int argc, char** argv){
 							printf("\tAll connected client(s):\n");
 							connected_client *p;
 							for(p = *connected_clients_list; p!=NULL; p = p->next){
-								print(2);
+								print_t(2);
 								printf("%s\n", p->user_id);
 							}
 							
