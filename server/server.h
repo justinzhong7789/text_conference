@@ -167,7 +167,7 @@ connected_client *create_client(int fd_, struct sockaddr_storage storage_){
 void registerClient(connected_client **linked_list_head, connected_client *new_node){
     connected_client *p = *linked_list_head;
     if(p == NULL){
-        linked_list_head = new_node;
+        *linked_list_head = new_node;
     }
     else{
         while(p->next != NULL){

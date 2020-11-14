@@ -31,7 +31,11 @@ char LOGIN_COMMAND[] = "/login",
 	 LIST_COMMAND[] = "/list";
 
 
-
+void print(int a){
+	for(int i=0;i<a;i++){
+		printf("\t");
+	}
+}
 
 void prompt(){
 	printf("\t>>>");
@@ -93,32 +97,36 @@ void *get_in_addr(struct sockaddr *sa){
 
 
 
-//handles when command is LOGIN, and argument numbers are already checked.
-void login_request(char *C_ID, char *C_pw, char *ip, char *port){
+//does the login request which is set up connection, (2)check response's ack
+//returns the socket file descriptor for later send() and recv() operations
+int login_request(char *C_ID, char *C_pw, char *ip, char *port){
 	int sockfd;
-	if(!connected){
-		sockfd = C_connection_setup(ip, port);
-	}
+	sockfd = C_connection_setup(ip, port);
+
 	if(sockfd == -1){
 		printf("Login failed: connection setup failed\n");
+		return -1;
 	}
 	else {
-		message login;
+		message login, buffer;
 		login.type = LOGIN;
-		login.size = strlen(C_pw);//one for the \0 
-		for(int i=0;i<=strlen(C_ID);i++){
-			login.source[i] = (unsigned char)(C_ID[i]);
+		strcpy((char *)login.source, C_ID);
+		strcpy((char *)login.data, C_pw);
+		send(sockfd, &login, sizeof(login), 0);
+		int numBytes = recv(sockfd, &buffer, sizeof(buffer), 0);
+		if(numBytes != -1){
+			printf("%s", buffer.data);
 		}
-		for(int i=0;i<=strlen(C_pw);i++){
-			login.data[i] = (unsigned char)C_pw[i];
+		if(buffer.type == LO_NAK){
+			connected = false;
+			return -1;
 		}
-		
-
-
-
+		else if(buffer.type == LO_ACK){
+			connected = true;
+		}	
+		return sockfd;
 	}
 	
-
 }
 
 

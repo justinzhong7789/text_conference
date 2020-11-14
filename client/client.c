@@ -15,13 +15,15 @@
 int main(int argc, char** argv){
 
     size_t BUFFER_SIZE = 2000;
-    char buffer[BUFFER_SIZE];
-
+    char *buffer = (char *)malloc(BUFFER_SIZE);
     prompt_userinput(buffer, &BUFFER_SIZE);
+    int sockfd = -1;
+    char *username = (char *)malloc(MAX_NAME);
     while(buffer != QUIT_COMMAND){
         int arg = 0;
-        char *command;
-        command = strtok(buffer, SPACE);
+        char *command, place_holder[BUFFER_SIZE];
+        strcpy(place_holder, buffer);
+        command = strtok(place_holder, SPACE);
         arg++;
         
         //LOGIN = request to establish connection + checking password on server side
@@ -55,14 +57,20 @@ int main(int argc, char** argv){
                 printf("You entered too few arguments, try again\n");
             }
             else{
-                login_request(ID, PW, S_IP, PORT);
-
-
+                sockfd = login_request(ID, PW, S_IP, PORT);
+                if(sockfd != -1){
+                    strcpy(username, ID);
+                }
             }
 
         }
         else if(command == LOGOUT_COMMAND){
-
+            message logout_request;
+            logout_request.type = EXIT;
+            strcpy((char *)logout_request.source, username);
+            send(sockfd, &logout_request, sizeof(message), 0);
+            close(sockfd);
+            sockfd = -1;
         }
         else if(command == JOIN_SESSION_COMMAND){
             char *session_name = strtok(NULL, SPACE);
@@ -76,18 +84,25 @@ int main(int argc, char** argv){
 
         }
         else if(command == LIST_COMMAND){
-
+            
 
         }
 
         else{
-            printf("Command is not found\n");
+            //send plain text
+            if(sockfd == -1){
+                printf("You aren't connected to a server yet\n");
+            }
+            else{
+
+
+            }
         }
 
 
         prompt_userinput(buffer, &BUFFER_SIZE);
     }
-
+    free(username);
     free(buffer);
 
     return 0;

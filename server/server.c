@@ -52,8 +52,6 @@ int main(int argc, char** argv){
 						perror("accept");
 					}
 					else{
-						FD_SET(new_fd, &master);
-						fdmax = max(new_fd, fdmax);
 						printf("New connection established.");
 						message buffer;
 						int numBytes = recv(new_fd, &buffer, sizeof(message),0);
@@ -64,25 +62,25 @@ int main(int argc, char** argv){
 							if(buffer.type == LOGIN){
 								int check_pw = checkPW(buffer.user_id, buffer.data);
 								message response;
-								if(check_pw == -2){
+								if(check_pw == 0){
+									//pw is correct, send ACK, keep connection
+									response.type = LO_ACK;
+									strcpy(response.source, SERVER);
+									strcpy(response.data, "Login success\n");
+									send(new_fd, &response, sizeof(message), 0);
+									FD_SET(new_fd, &master);
+									fdmax = max(new_fd, fdmax);
+								}
+								else{
 									//username is not found in the database
 									//send NACK
 									response.type = LO_NAK;
 									strcpy(response.source, SERVER);
-									strcpy(response.data, "Username not found\n");
+									(check_pw == -2) ? strcpy(response.data, "Username not found\n") :
+													  strcpy(response.data, "Login credentials don't match\n");
+									send(new_fd, &response, sizeof(message), 0);
+									close(new_fd);
 								}
-								else if(check_pw == -1){
-									response.type = LO_NAK;
-									strcpy(response.source, SERVER);
-									strcpy(response.data, "Login credentials don't match\n");
-								}
-								else if(check_pw == 0){
-									//pw is correct, send ack
-									response.type = LO_ACK;
-									strcpy(response.source, SERVER);
-									strcpy(response.data, "Login success\n");
-								}
-								send(new_fd, &response, sizeof(message), 0);
 							}
 						}
 						else{
@@ -125,7 +123,16 @@ int main(int argc, char** argv){
 							
 						}
 						else if(buffer.type == QUERY){
+							printf("\tAll connected client(s):\n");
+							connected_client *p;
+							for(p = *connected_clients_list; p!=NULL; p = p->next){
+								print(2);
+								printf("%s\n", p->user_id);
+							}
 							
+							//then print chat sessions
+							
+
 						}
 						else {
 							perror("Message type not recognized");
