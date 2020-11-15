@@ -37,7 +37,7 @@ int main(int argc, char** argv){
 	fdmax = sockfd;
 	while (1)
 	{
-		printf("Server: waiting for incoming...\n");
+		printf("Server: waiting for incoming requests...\n");
 		read_fds = master;
 		if(select(fdmax+1, &read_fds, NULL, NULL,NULL) == -1){
 			perror("select");
@@ -67,7 +67,7 @@ int main(int argc, char** argv){
 									//pw is correct, send ACK, keep connection
 									response.type = LO_ACK;
 									strcpy((char *)response.source, SERVER);
-									strcpy((char *)response.data, "Login success\n");
+									strcpy((char *)response.data, "Login credentials match. Login successful\n");
 									send(new_fd, &response, sizeof(message), 0);
 									FD_SET(new_fd, &master);
 									fdmax = (new_fd>fdmax)? new_fd: fdmax;								}
@@ -92,10 +92,12 @@ int main(int argc, char** argv){
 					//data from an already connected client
 					message buffer;
 					int numbytes = recv(i, &buffer, sizeof(message), 0);
+					printf("%d%s\n%s\n",buffer.type,buffer.source, buffer.data);
 					if(numbytes == -1){
 						perror("recv from old connections error\n");
 					}
 					else{
+						//EXIT = LOGOUT
 						if(buffer.type == EXIT){
 							connected_client *p;
 							for(p = *connected_clients_list; p!= NULL;p = p->next){
@@ -109,6 +111,18 @@ int main(int argc, char** argv){
 								//deletion success
 								printf("Socket fd: %d successfully closed\n", deleted_fd);
 							}
+							fd_set fds;
+							FD_ZERO(&fds);
+							int old_fdmax = fdmax, new_fdmax;
+							for(int i=0;i<= old_fdmax; i++ ){
+								if(FD_ISSET(i, &master) && i!=deleted_fd){
+									FD_SET(i, &fds);
+									new_fdmax = (i>fdmax)?i:fdmax;
+								}
+							}
+							fdmax = new_fdmax;
+							master = fds;
+
 						}
 						else if(buffer.type == JOIN){
 
@@ -123,6 +137,9 @@ int main(int argc, char** argv){
 							
 						}
 						else if(buffer.type == MESSAGE){
+							//check if client is in any session
+							//send the message to all clients in the session
+							printf("%s said: %s\n", buffer.source, buffer.data);
 							
 						}
 						else if(buffer.type == QUERY){

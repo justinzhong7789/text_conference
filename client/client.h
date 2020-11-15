@@ -22,8 +22,8 @@ int C_connection_setup(char *ip, char *port);
 
 bool connected = false;
 char SPACE[] = " ";
-char LOGIN_COMMAND[] = "/login", 
-	 QUIT_COMMAND[] = "/quit",
+char QUIT_COMMAND[] = "/quit",
+	 LOGIN_COMMAND[] = "/login", 
 	 LOGOUT_COMMAND[] = "/logout",
 	 JOIN_SESSION_COMMAND[] = "/joinsession",
 	 LEAVE_SESSION_COMMAND[] = "/leavesession",

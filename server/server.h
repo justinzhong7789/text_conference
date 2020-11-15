@@ -16,10 +16,11 @@
 #include "../message.h"
 #include "session.h"
 
-#define DATABASE "database_txt"
+#define DATABASE "database.txt"
 #define CHAR_SIZE 1
 #define BACK_LOG 10
 #define SERVER "SERVER"
+
 void writeToDatabase(char *username, char *password);
 int checkPW(char *username, char *inputpw);
 void sigchild_handler(int s);
@@ -229,3 +230,10 @@ bool deleteNode(connected_client **list, char *user_id_){
     }
 }
 
+void printConnectedClientList(connected_client **p){
+    connected_client *t = *p;
+    int i=0;
+    while(t!=NULL){
+        printf("%d : %s\t%d\n", i, t->user_id, t->fd);
+    }
+}
