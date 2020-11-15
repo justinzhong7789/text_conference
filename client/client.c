@@ -18,7 +18,7 @@ int main(int argc, char** argv){
     char *buffer = (char *)malloc(BUFFER_SIZE);
     prompt_userinput(buffer, &BUFFER_SIZE);
     int sockfd = -1;
-    char *username = (char *)malloc(MAX_NAME);
+    char *username = NULL;
     while(buffer != QUIT_COMMAND){
         int arg = 0;
         char *command, place_holder[BUFFER_SIZE];
@@ -59,6 +59,7 @@ int main(int argc, char** argv){
             else{
                 sockfd = login_request(ID, PW, S_IP, PORT);
                 if(sockfd != -1){
+                    username = (char *)malloc(MAX_NAME);
                     strcpy(username, ID);
                 }
             }
@@ -94,7 +95,18 @@ int main(int argc, char** argv){
                 printf("You aren't connected to a server yet\n");
             }
             else{
-
+                if(username == NULL){
+                    printf("Your username is unclear\n");
+                }
+                else{
+                    message chat;
+                    chat.type = MESSAGE;
+                    strcpy((char *)chat.source, username);
+                    strcpy((char *)chat.data, buffer);
+                    send(sockfd, &chat, sizeof(message), 0);
+                    
+                }
+                
 
             }
         }
