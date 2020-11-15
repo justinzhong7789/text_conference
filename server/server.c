@@ -16,20 +16,20 @@
 #include "../message.h"
 
 int main(int argc, char** argv){
-	if(argc!=1){
+	if(argc!=2){
 		perror("Bad arguments.");
 		exit(1);
 	}
 	connected_client **connected_clients_list = (connected_client **)malloc(sizeof(connected_client **));
 	*connected_clients_list = NULL;	
-	int sockfd = S_initSetup(argv[0]);
+	int sockfd = S_initSetup(argv[1]);
 	int fdmax;
 
 	struct sockaddr_storage income_addr;
 	socklen_t sockaddrlen;
 	//set this socket to nonblocking
 	fcntl(sockfd, F_SETFL, O_NONBLOCK);
-	printf("Server: waiting for incoing connections...\n");
+
 	fd_set master, read_fds;
 	FD_ZERO(&master);
 	FD_ZERO(&read_fds);
@@ -37,6 +37,7 @@ int main(int argc, char** argv){
 	fdmax = sockfd;
 	while (1)
 	{
+		printf("Server: waiting for incoming...\n");
 		read_fds = master;
 		if(select(fdmax+1, &read_fds, NULL, NULL,NULL) == -1){
 			perror("select");
@@ -46,7 +47,7 @@ int main(int argc, char** argv){
 			if(FD_ISSET(i, &read_fds)){
 				if(i == sockfd){
 					//new connection request
-					sockaddrlen = sizeof income_addr;
+					sockaddrlen = sizeof(struct sockaddr_storage);
 					int new_fd = accept(sockfd, (struct sockaddr *)&income_addr, &sockaddrlen);
 					if(new_fd == -1){
 						perror("accept");
