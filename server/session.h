@@ -18,8 +18,8 @@ typedef struct sessionNode{
     int socket_id[MAXSOCKETS];
 }sessionNode;
 
-struct sessionNode sessionList[MAXSECTIONS]; //list of all sessions
-int curSize = 0;
+// struct sessionNode sessionList[MAXSECTIONS]; //list of all sessions
+// int curSize = 0;
 
 int insertSession(struct sessionNode* newSession);
 int findSessionOfClient(char* clientID);
