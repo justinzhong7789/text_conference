@@ -147,12 +147,21 @@ int main(int argc, char** argv){
 								continue;
 							}
 							//Session has not been created
-							//Need to find client ID and insert to sessionNode
 							struct sessionNode* newSession = (struct sessionNode*)malloc(sizeof(struct sessionNode));
+							newSession->sessionName= sessionName;
+							newSession->clientIDs = (char**)malloc(MAXNUMCLIENTS*sizeof(char*));
+							for(int n=0; n<MAXNUMCLIENTS; n++){
+								newSession->clientIDs[n]=malloc(MAXSIZECLIENTID*sizeof(char));
+							}
+							strcpy(newSession->clientIDs[0], clientID);
+							newSession->curNumClients=1;
+							newSession->sockfd = sockfd;
+
 							if (insertSession(sessionList, &curSessionSize, newSession)==-1){
+								printf("Can not insert.\n");
 								continue;
 							}
-
+							printf("Client %s created and joined session %s.\n", clientID, sessionName);
 							
 						}
 						else if(buffer.type == LEAVE_SESS){
@@ -191,7 +200,7 @@ int main(int argc, char** argv){
 
 	}
 		
-
+	deleteAllSessions(sessionList);
 	free_linked_list(connected_clients_list);
 	return 0;
 }

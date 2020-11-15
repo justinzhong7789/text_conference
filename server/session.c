@@ -51,6 +51,10 @@ int deleteSession(struct sessionNode** sessionList, int* listSize, int thisSockf
 void deleteAllSessions(struct sessionNode** sessionList){
 	for (int i=0; i<MAXNUMSESSIONS; i++){
 		if (sessionList[i]!=NULL){
+			for(int n=0; n<MAXSIZECLIENTID; n++){
+				free(sessionList[i]->clientIDs[n]);
+			}
+			free(sessionList[i]->clientIDs);
 			free(sessionList[i]);
 		}
 	}

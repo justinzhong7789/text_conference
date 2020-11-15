@@ -11,13 +11,15 @@
 
 #define MAXNUMSESSIONS 128
 #define MAXNUMCLIENTS 10
+#define MAXSIZECLIENTID 128
 
 struct sessionNode{
     char* sessionName;
     char* IPAddress;
     int port;
     int sockfd;
-    char* clientIDs[MAXNUMCLIENTS];
+    char** clientIDs;
+    int curNumClients;
 };
 
 
