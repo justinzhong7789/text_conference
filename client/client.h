@@ -21,7 +21,7 @@ void prompt_userinput(char *buffer, size_t *size);
 int C_connection_setup(char *ip, char *port);
 
 bool connected = false;
-char SPACE = ' ';
+char SPACE[] = " ";
 char LOGIN_COMMAND[] = "/login", 
 	 QUIT_COMMAND[] = "/quit",
 	 LOGOUT_COMMAND[] = "/logout",
@@ -125,3 +125,4 @@ int login_request(char *C_ID, char *C_pw, char *ip, char *port){
 }
 
 
+//char *parseCommand(char *string, )

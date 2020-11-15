@@ -23,13 +23,14 @@ int main(int argc, char** argv){
         int arg = 0;
         char *command, place_holder[BUFFER_SIZE];
         strcpy(place_holder, buffer);
-        command = strtok(place_holder, &SPACE);
+        printf("aa-%s-aa", place_holder);
+        command = strtok(place_holder, SPACE);
         arg++;
-        
+        printf("aa-%s-aa\n", command);
         //LOGIN = request to establish connection + checking password on server side
-        if(command == LOGIN_COMMAND){
+        if(strcmp(command, LOGIN_COMMAND) == 0){
             char *ID, *PW, *S_IP, *PORT, *argument;
-            argument = strtok(NULL, &SPACE);
+            argument = strtok(NULL, SPACE);
             arg++;
             while (argument != NULL)
             {
@@ -45,7 +46,7 @@ int main(int argc, char** argv){
                 else if(arg == 5){
                     PORT = argument;
                 }
-                argument = strtok(NULL, &SPACE);
+                argument = strtok(NULL, SPACE);
                 if(argument != NULL){
                     arg++;
                 }
@@ -57,34 +58,37 @@ int main(int argc, char** argv){
                 printf("You entered too few arguments, try again\n");
             }
             else{
+                printf("%d\n%s\n%s\n%s\n%s\n",arg,ID, PW, S_IP, PORT);
                 sockfd = login_request(ID, PW, S_IP, PORT);
+                printf("%d", sockfd);
                 if(sockfd != -1){
                     username = (char *)malloc(MAX_NAME);
                     strcpy(username, ID);
                 }
             }
-
         }
-        else if(command == LOGOUT_COMMAND){
+        else if(strcmp(command, LOGOUT_COMMAND) == 0){
             message logout_request;
             logout_request.type = EXIT;
             strcpy((char *)logout_request.source, username);
             send(sockfd, &logout_request, sizeof(message), 0);
             close(sockfd);
+            free(username);
+            username = NULL;
             sockfd = -1;
         }
-        else if(command == JOIN_SESSION_COMMAND){
-            char *session_name = strtok(NULL, &SPACE);
+        else if(strcmp(command, JOIN_SESSION_COMMAND) == 0){
+            char *session_name = strtok(NULL, SPACE);
         }
-        else if(command == LEAVE_SESSION_COMMAND){
+        else if(strcmp(command, LEAVE_SESSION_COMMAND)){
 
 
         }
-        else if(command == CREATE_SESSION_COMMAND){
-            char *session_name = strtok(NULL, &SPACE);
+        else if(strcmp(command, CREATE_SESSION_COMMAND)==0){
+            char *session_name = strtok(NULL, SPACE);
 
         }
-        else if(command == LIST_COMMAND){
+        else if(strcmp(command, LIST_COMMAND) == 0){
             
 
         }
