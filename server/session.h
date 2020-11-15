@@ -6,25 +6,24 @@
 #define SESSION_H
 
 #include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+
+#define MAXNUMSESSIONS 128
+
+struct sessionNode{
+    char* sessionName;
+    char* IPAddress;
+    int port;
+    int sockfd;
+    //int socket_id[MAXSOCKETS];
+};
 
 
-
-#define MAXSOCKETS 128
-#define MAXSECTIONS 128
-
-typedef struct sessionNode{
-    int sessionName;
-    char *session_id;
-    int socket_id[MAXSOCKETS];
-}sessionNode;
-
-// struct sessionNode sessionList[MAXSECTIONS]; //list of all sessions
-// int curSize = 0;
-
-int insertSession(struct sessionNode* newSession);
-int findSessionOfClient(char* clientID);
-int deleteSession(struct sessionNode* newSession);
-void printAllSessions();
+int insertSession(struct sessionNode** sessionList, int* listSize, struct sessionNode* newSession);
+int findSessionOfClient(struct sessionNode** sessionList, int* listSize, char* clientID);
+int deleteSession(struct sessionNode** sessionList, int* listSize, int thisSockfd);
+void printAllSessions(struct sessionNode** sessionList, int* listSize);
 
 #endif
 

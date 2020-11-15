@@ -80,6 +80,7 @@ int main(int argc, char** argv){
         }
         else if(strcmp(command, JOIN_SESSION_COMMAND) == 0){
             char *session_name = strtok(NULL, SPACE);
+
         }
         else if(strcmp(command, LEAVE_SESSION_COMMAND) == 0){
             
