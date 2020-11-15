@@ -110,12 +110,15 @@ int main(int argc, char** argv){
 							}
 						}
 						else if(buffer.type == JOIN){
-							
-						}
-						else if(buffer.type == LEAVE_SESS){
+
 							
 						}
 						else if(buffer.type == NEW_SESS){
+							
+							
+						}
+						else if(buffer.type == LEAVE_SESS){
+
 							
 						}
 						else if(buffer.type == MESSAGE){

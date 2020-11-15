@@ -14,6 +14,7 @@
 #include <sys/wait.h>
 
 #include "../message.h"
+#include "session.h"
 
 #define DATABASE "database_txt"
 #define CHAR_SIZE 1
