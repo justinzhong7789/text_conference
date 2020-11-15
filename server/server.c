@@ -29,11 +29,7 @@ int main(int argc, char** argv){
 	socklen_t sockaddrlen;
 	//set this socket to nonblocking
 	fcntl(sockfd, F_SETFL, O_NONBLOCK);
-<<<<<<< HEAD
-
-=======
 	printf("Server: waiting for incoming connections...\n");
->>>>>>> Edited functions for session.
 	fd_set master, read_fds;
 	FD_ZERO(&master);
 	FD_ZERO(&read_fds);
