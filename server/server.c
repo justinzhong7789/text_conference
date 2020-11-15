@@ -25,6 +25,10 @@ int main(int argc, char** argv){
 	int sockfd = S_initSetup(argv[1]);
 	int fdmax;
 
+	//initialize session list
+	struct sessionNode* sessionList[MAXNUMSESSIONS];
+	int curSessionSize = 0;
+
 	struct sockaddr_storage income_addr;
 	socklen_t sockaddrlen;
 	//set this socket to nonblocking
@@ -35,8 +39,6 @@ int main(int argc, char** argv){
 	FD_ZERO(&read_fds);
 	FD_SET(sockfd, &master);
 	fdmax = sockfd;
-	//initialize session list
-	struct sessionNode sessionList[MAXNUMSESSIONS];
 
 	while (1)
 	{
@@ -132,13 +134,25 @@ int main(int argc, char** argv){
 							
 						}
 						else if(buffer.type == NEW_SESS){
-							char* session = buffer.data;
-							//char* 
-							//First look for 
-							//Create a session
+							char* sessionName = (char*)buffer.data;
+							char* clientID = (char*)buffer.source;
+							//Look for client in already connected sessions
+							if (findSessionOfClient(sessionList, &curSessionSize, clientID)==-1){
+								printf("Client already joined a session");
+								continue;
+							}
+							//Look for the session in the existing list
+							if (findSessionByName(sessionList, &curSessionSize, sessionName)==-1){
+								printf("Session already exist.\n");
+								continue;
+							}
+							//Session has not been created
+							//Need to find client ID and insert to sessionNode
 							struct sessionNode* newSession = (struct sessionNode*)malloc(sizeof(struct sessionNode));
-							//newSession
-							
+							if (insertSession(sessionList, &curSessionSize, newSession)==-1){
+								continue;
+							}
+
 							
 						}
 						else if(buffer.type == LEAVE_SESS){

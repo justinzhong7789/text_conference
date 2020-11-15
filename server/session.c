@@ -10,11 +10,11 @@ int insertSession(struct sessionNode** sessionList, int* listSize, struct sessio
 		return 1;
 	} else{
 		printf("Session list is full.\n");
-		return 0;
+		return -1;
 	}
 }
 
-//Find session index, given session name
+//Return session index, given session name
 int findSessionByName(struct sessionNode** sessionList, int* listSize, char* thisSessionName){
 	for (int i=0; i<*listSize; i++){
 		if(strcmp(sessionList[i]->sessionName, thisSessionName)==0){
@@ -23,6 +23,19 @@ int findSessionByName(struct sessionNode** sessionList, int* listSize, char* thi
 	}
 	return -1;
 }
+
+//Return session index, given client ID
+int findSessionOfClient(struct sessionNode** sessionList, int* listSize, char* clientID){
+	for (int i=0; i<*listSize; i++){
+		for (int j=0; j<MAXNUMCLIENTS; j++){
+			if(strcmp(sessionList[i]->clientIDs[j], clientID)==0){
+				return i;
+			}
+		}
+	}
+	return 0;
+}
+
 
 //Delete session, given a socket number
 int deleteSession(struct sessionNode** sessionList, int* listSize, int thisSockfd){
@@ -33,6 +46,14 @@ int deleteSession(struct sessionNode** sessionList, int* listSize, int thisSockf
 		}
 	}
 	return 0;
+}
+
+void deleteAllSessions(struct sessionNode** sessionList){
+	for (int i=0; i<MAXNUMSESSIONS; i++){
+		if (sessionList[i]!=NULL){
+			free(sessionList[i]);
+		}
+	}
 }
 
 void printAllSessions(struct sessionNode** sessionList, int* listSize){

@@ -79,7 +79,31 @@ int main(int argc, char** argv){
             }
         }
         else if(strcmp(command, JOIN_SESSION_COMMAND) == 0){
-            char *session_name = strtok(NULL, SPACE);
+            //Join Session
+            //char *session_name = strtok(NULL, SPACE);
+            char *session_name, *argument;
+            argument = strtok(NULL, SPACE);
+            arg++;
+            while (argument != NULL)
+            {
+                if(arg == 2){
+                    session_name = argument;
+                }
+                argument = strtok(NULL, SPACE);
+                if(argument != NULL){
+                    arg++;
+                }
+            }
+            if(arg > 2){
+                printf("You entered too many arguments, try again\n");
+            }
+            else if(arg<2){
+                printf("You entered too few arguments, try again\n");
+            }
+            else{
+                //Watch for format in login request
+                //sockfd = join_request(ID, PW, S_IP, PORT);
+            }
 
         }
         else if(strcmp(command, LEAVE_SESSION_COMMAND) == 0){
@@ -87,7 +111,7 @@ int main(int argc, char** argv){
 
         }
         else if(strcmp(command, CREATE_SESSION_COMMAND)==0){
-            char *session_name = strtok(NULL, SPACE);
+            //char *session_name = strtok(NULL, SPACE);
         }
         else if(strcmp(command, LIST_COMMAND) == 0){
 
