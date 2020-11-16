@@ -133,8 +133,12 @@ int main(int argc, char** argv){
 							printf("Server handling join request.\n");
 							char* sessionName = (char*)buffer.data;
 							char* clientID = (char*)buffer.source; //username
-							printf("Aquired sessionName(%s) and clientID(%s).\n",sessionName, clientID);
-							//Look for the session client is in
+							printf("Session name %s, client ID %s.\n",sessionName, clientID);
+							printf("-----------Session List ---------\n");
+							printAllSessions(sessionList, &curSessionSize);
+							printf("---------------------------------\n");
+
+							//Look for the session of the client
 							if (findSessionOfClient(sessionList, &curSessionSize, clientID) !=-1){
 								printf("Client already joined a session\n");
 								continue;
@@ -174,7 +178,8 @@ int main(int argc, char** argv){
 							}
 							//Session has not been created
 							struct sessionNode* newSession = (struct sessionNode*)malloc(sizeof(struct sessionNode));
-							newSession->sessionName= sessionName;
+							newSession->sessionName = (char*)malloc(MAXSIZESESSIONNAME*sizeof(char));
+							strcpy(newSession->sessionName, sessionName);
 							newSession->sockfds  = (int*)malloc(MAXNUMCLIENTS*sizeof(int));
 							newSession->sockfds[0]=sockfd;
 							newSession->clientIDs = (char**)malloc(MAXNUMCLIENTS*sizeof(char*));
@@ -189,6 +194,9 @@ int main(int argc, char** argv){
 								continue;
 							}
 							printf("Client %s created and joined session %s.\n", clientID, sessionName);
+							printf("-----------Session List ---------\n");
+							printAllSessions(sessionList, &curSessionSize);
+							printf("---------------------------------\n");
 							
 						}
 						else if(buffer.type == LEAVE_SESS){
@@ -199,14 +207,13 @@ int main(int argc, char** argv){
 								printf("Client did not connect to any session.\n");
 								continue;
 							}
-
+							printf("Client %s left the session.\n", clientID);
 							int clientIdx = findIdxOfClient(sessionList, clientID, sessionIdx);//helper function in session.c
 							removeClientID(sessionList, clientIdx, sessionIdx);
 							//Free session node if all clients have left
 							if (sessionList[sessionIdx]->curNumClients==0){
 								deleteSession(sessionList, &curSessionSize, sessionIdx);
 							}
-							printf("Client %s left the session.\n", clientID);
 						}
 
 						else if(buffer.type == MESSAGE){

@@ -16,8 +16,10 @@ int insertSession(struct sessionNode** sessionList, int* listSize, struct sessio
 
 //Return session index, given session name
 int findSessionByName(struct sessionNode** sessionList, int* listSize, char* thisSessionName){
+
 	for (int i=0; i<*listSize; i++){
 		if(strcmp(sessionList[i]->sessionName, thisSessionName)==0){
+			printf("Found match on index %d", i);
 			return i;
 		}
 	}
@@ -26,6 +28,7 @@ int findSessionByName(struct sessionNode** sessionList, int* listSize, char* thi
 
 //Return session index, given client ID
 int findSessionOfClient(struct sessionNode** sessionList, int* listSize, char* clientID){
+
 	for (int i=0; i<*listSize; i++){
 		for (int j=0; j<MAXNUMCLIENTS; j++){
 			if(strcmp(sessionList[i]->clientIDs[j], clientID)==0){
@@ -64,6 +67,7 @@ void removeClientID(struct sessionNode** sessionList, int clientIdx, int session
 void deleteSession(struct sessionNode** sessionList, int* listSize, int sessionIdx){
 	printf("Deleting session with index %d\n", sessionIdx);
 	//Free the session node
+	free(sessionList[sessionIdx]->sessionName);
 	free(sessionList[sessionIdx]->sockfds);
 	for(int n=0; n<MAXNUMCLIENTS; n++){
 		free(sessionList[sessionIdx]->clientIDs[n]);
@@ -85,6 +89,7 @@ void deleteAllSessions(struct sessionNode** sessionList){
 	printf("Deleting all sessions\n");
 	for (int i=0; i<MAXNUMSESSIONS; i++){
 		if (sessionList[i]!=NULL){
+			free(sessionList[i]->sessionName);
 			free(sessionList[i]->sockfds);
 			for(int n=0; n<MAXNUMCLIENTS; n++){
 				free(sessionList[i]->clientIDs[n]);

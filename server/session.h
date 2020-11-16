@@ -11,6 +11,7 @@
 
 #define MAXNUMSESSIONS 128
 #define MAXNUMCLIENTS 10
+#define MAXSIZESESSIONNAME 128
 #define MAXSIZECLIENTID 128
 
 struct sessionNode{
