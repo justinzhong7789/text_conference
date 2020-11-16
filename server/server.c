@@ -33,7 +33,6 @@ int main(int argc, char** argv){
 	socklen_t sockaddrlen;
 	//set this socket to nonblocking
 	fcntl(sockfd, F_SETFL, O_NONBLOCK);
-	printf("Server: waiting for incoming connections...\n");
 	fd_set master, read_fds;
 	FD_ZERO(&master);
 	FD_ZERO(&read_fds);
@@ -62,9 +61,7 @@ int main(int argc, char** argv){
 						message buffer;
 						int numBytes = recv(new_fd, &buffer, sizeof buffer,0);
 						if(numBytes != -1){
-							connected_client *new_client = create_client(new_fd, income_addr);
-							strcpy(new_client->user_id, (char*)buffer.source);
-							registerClient(connected_clients_list, new_client);
+							
 							if(buffer.type == LOGIN){
 								int check_pw = checkPW((char *)buffer.source, (char *)buffer.data);
 								message response;
@@ -75,7 +72,10 @@ int main(int argc, char** argv){
 									strcpy((char *)response.data, "Login credentials match. Login successful\n");
 									send(new_fd, &response, sizeof(message), 0);
 									FD_SET(new_fd, &master);
-									fdmax = (new_fd>fdmax)? new_fd: fdmax;								}
+									fdmax = (new_fd>fdmax)? new_fd: fdmax;	
+									connected_client *new_client = create_client(new_fd, income_addr);
+									strcpy(new_client->user_id, (char*)buffer.source);
+									registerClient(connected_clients_list, new_client);							}
 								else{
 									//username is not found in the database
 									//send NACK
@@ -97,7 +97,6 @@ int main(int argc, char** argv){
 					//data from an already connected client
 					message buffer;
 					int numbytes = recv(i, &buffer, sizeof(message), 0);
-					printf("Type: %d, source: %s, data: %s\n",buffer.type,buffer.source, buffer.data);
 					if(numbytes == -1){
 						perror("recv from old connections error\n");
 					}
@@ -127,7 +126,6 @@ int main(int argc, char** argv){
 							}
 							fdmax = new_fdmax;
 							master = fds;
-
 						}
 						else if(buffer.type == JOIN){
 							printf("Server handling join request.\n");
@@ -220,6 +218,10 @@ int main(int argc, char** argv){
 							//check if client is in any session
 							char* clientID = (char*)buffer.source;
 							char* clientMsg = (char*)buffer.data;
+							message context;
+							strcpy((char *)context.source, clientID);
+							strcpy((char *)context.data, clientMsg);
+							context.size = strlen(clientMsg);
 							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, clientID); //Find the index of session client is in
 							if (sessionIdx==-1){
 								printf("Client did not connect to any session.\n");
@@ -230,21 +232,37 @@ int main(int argc, char** argv){
 							for (int n=0; n<sessionList[sessionIdx]->curNumClients; n++){
 								//char* curClientID = sessionList[sessionIdx]->clientIDs[n];
 								//send the message to this client
-								send(sessionList[sessionIdx]->sockfds[n], clientMsg, strlen(clientMsg),0);
+								send(sessionList[sessionIdx]->sockfds[n], &context, sizeof(message),0);
 							}
 						}
 
 						else if(buffer.type == QUERY){
-							printf("\tAll connected client(s):\n");
+							//may have risk of overflow
+							int loc = 0;
+							message list_response;
+							strcpy((char *)list_response.source, SERVER);
+							list_response.type = QUERY;
 							connected_client *p;
-							for(p = *connected_clients_list; p!=NULL; p = p->next){
-								print_t(2);
-								printf("%s\n", p->user_id);
+							char prompt1[] = "All connected clients:\n",
+								 prompt2[] = "All sessions available:\n";
+							strcpy((char *)list_response.data + loc, prompt1);
+							loc += strlen(prompt1);
+							for(p=*connected_clients_list; p!=NULL; p=p->next){
+								strcpy((char *)list_response.data+loc, p->user_id);
+								loc+=strlen(p->user_id);
+								list_response.data[loc] = '\n';
+								loc++; 
 							}
-							
-							//then print chat sessions
-							
-
+							strcpy((char *)list_response.data+loc, prompt2);
+							loc+= strlen(prompt2);
+							for(int i=0;i<curSessionSize;i++){
+								strcpy((char *)list_response.data+loc, sessionList[i]->sessionName);
+								loc+=strlen(sessionList[i]->sessionName);
+								list_response.data[loc] = '\n';
+								loc++;
+							}
+							list_response.data[loc] = '\0';
+							send(i, &list_response, sizeof(message), 0);
 						}
 						else {
 							perror("Message type not recognized");

@@ -24,8 +24,10 @@ int main(int argc, char** argv){
         char *command, place_holder[BUFFER_SIZE];
         strcpy(place_holder, buffer);
         command = strtok(place_holder, SPACE);
+        if(command == NULL){
+            continue;
+        }
         arg++;
-        printf("aa-%s-aa\n", command);
         if(strcmp(command, LOGIN_COMMAND) == 0){
             char *ID, *PW, *S_IP, *PORT, *argument;
             argument = strtok(NULL, SPACE);
@@ -169,7 +171,12 @@ int main(int argc, char** argv){
             }
         }
         else if(strcmp(command, LIST_COMMAND) == 0){
-
+            message list_request, response;
+            list_request.type = QUERY;
+            strcpy((char *)list_request.source, username);
+            send(sockfd, &list_request, sizeof(message), 0);
+            recv(sockfd, &response, sizeof(message), 0);
+            printf("%s\n", response.data);
         }
         else{
             //send plain text
