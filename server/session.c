@@ -64,18 +64,19 @@ void removeClientID(struct sessionNode** sessionList, int clientIdx, int session
 void deleteSession(struct sessionNode** sessionList, int* listSize, int sessionIdx){
 	printf("Deleting session with index %d\n", sessionIdx);
 	//Free the session node
-	for(int n=0; n<MAXSIZECLIENTID; n++){
+	for(int n=0; n<MAXNUMCLIENTS; n++){
 		free(sessionList[sessionIdx]->clientIDs[n]);
 	}
 	free(sessionList[sessionIdx]->clientIDs);
 	free(sessionList[sessionIdx]);
 
 	//Move the rest of sessions forward
-	for (int i=sessionIdx; i<*listSize; i++){
+	for (int i=sessionIdx; i<*listSize-1; i++){
 		sessionList[i]=sessionList[i+1];
 	}
+
 	//Decrement the number of sessions
-	*listSize = *listSize + 1;	
+	*listSize = *listSize - 1;	
 }
 
 //Delete all sessions
@@ -83,7 +84,7 @@ void deleteAllSessions(struct sessionNode** sessionList){
 	printf("Deleting all sessions\n");
 	for (int i=0; i<MAXNUMSESSIONS; i++){
 		if (sessionList[i]!=NULL){
-			for(int n=0; n<MAXSIZECLIENTID; n++){
+			for(int n=0; n<MAXNUMCLIENTS; n++){
 				free(sessionList[i]->clientIDs[n]);
 			}
 			free(sessionList[i]->clientIDs);

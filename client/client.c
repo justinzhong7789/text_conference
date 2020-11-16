@@ -96,7 +96,6 @@ int main(int argc, char** argv){
                         arg++;
                     }
                 }
-                printf("session name in client: %s\n",session_name);
 
                 if(arg > 2){
                     printf("You entered too many arguments, try again\n");
@@ -105,6 +104,7 @@ int main(int argc, char** argv){
                     printf("You entered too few arguments, try again\n");
                 }
                 else{
+                    printf("Sending message to join session %s\n",session_name);
                     message join_sess_request;
                     join_sess_request.type = JOIN;
                     strcpy((char *)join_sess_request.source, username);
@@ -152,8 +152,6 @@ int main(int argc, char** argv){
                         arg++;
                     }
                 }
-                printf("session name in client: %s\n",session_name);
-
                 if(arg > 2){
                     printf("You entered too many arguments, try again\n");
                 }
@@ -161,6 +159,7 @@ int main(int argc, char** argv){
                     printf("You entered too few arguments, try again\n");
                 }
                 else{
+                    printf("Sending message to create session %s\n",session_name);
                     message new_sess_request;
                     new_sess_request.type = NEW_SESS;
                     strcpy((char *)new_sess_request.source, username);
