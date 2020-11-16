@@ -97,7 +97,7 @@ int main(int argc, char** argv){
 					//data from an already connected client
 					message buffer;
 					int numbytes = recv(i, &buffer, sizeof(message), 0);
-					printf("%d%s\n%s\n",buffer.type,buffer.source, buffer.data);
+					printf("Type: %d, source: %s, data: %s\n",buffer.type,buffer.source, buffer.data);
 					if(numbytes == -1){
 						perror("recv from old connections error\n");
 					}
@@ -130,8 +130,10 @@ int main(int argc, char** argv){
 
 						}
 						else if(buffer.type == JOIN){
+							printf("Server handling join request.\n");
 							char* sessionName = (char*)buffer.data;
-							char* clientID = (char*)buffer.source;
+							char* clientID = (char*)buffer.source; //username
+							printf("Aquired sessionName(%s) and clientID(%s).\n",sessionName, clientID);
 							//Look for the session client is in
 							if (findSessionOfClient(sessionList, &curSessionSize, clientID) !=-1){
 								printf("Client already joined a session\n");
@@ -196,15 +198,25 @@ int main(int argc, char** argv){
 							removeClientID(sessionList, clientIdx, sessionIdx);
 							//Free session node if all clients have left
 							if (sessionList[sessionIdx]->curNumClients==0){
-								deleteSession(sessionList, sessionIdx);
+								deleteSession(sessionList, &curSessionSize, sessionIdx);
 							}
 
 						}
 						else if(buffer.type == MESSAGE){
+							char* clientID = (char*)buffer.source;
+							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, clientID); //Index of the session client is in
+							int clientIdx = findIdxOfClient(sessionList, clientID, sessionIdx);//Index of client in clientID list
 							//check if client is in any session
+							if (clientIdx==-1){
+								printf("Client is not connected to any session.\n");
+								continue;
+							}
+							//Find socket address, given client ID
+
+
 							//send the message to all clients in the session
-							printf("%s said: %s\n", buffer.source, buffer.data);
-							
+
+							printf("%s said: %s\n", buffer.source, buffer.data);							
 						}
 						else if(buffer.type == QUERY){
 							printf("\tAll connected client(s):\n");
