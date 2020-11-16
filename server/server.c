@@ -197,7 +197,7 @@ int main(int argc, char** argv){
 							printf("---------------------------------\n");
 							
 						}
-						else if(buffer.type == LEAVE_SESS){
+						else if(buffer.type == LEAVE_SESS || buffer.type == QUIT){
 							char* clientID = (char*)buffer.source;
 							//Look for client in already connected sessions
 							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, clientID);
@@ -213,7 +213,6 @@ int main(int argc, char** argv){
 								deleteSession(sessionList, &curSessionSize, sessionIdx);
 							}
 						}
-
 						else if(buffer.type == MESSAGE){
 							//check if client is in any session
 							char* clientID = (char*)buffer.source;
@@ -255,11 +254,25 @@ int main(int argc, char** argv){
 							}
 							strcpy((char *)list_response.data+loc, prompt2);
 							loc+= strlen(prompt2);
+							//output in format:
+							//session_name:
+							//		client1
+							//		client2...
 							for(int i=0;i<curSessionSize;i++){
 								strcpy((char *)list_response.data+loc, sessionList[i]->sessionName);
 								loc+=strlen(sessionList[i]->sessionName);
+								list_reponse.data[loc] = ':';
+								loc++;
 								list_response.data[loc] = '\n';
 								loc++;
+								for(int j=0;j<sessionList[i]->curNumClients; j++){
+									list_response.data[loc] = '\t';
+									loc++;
+									strcpy((char *)list_response.data+loc, sessionList[i]->clientIDs[j]);
+									loc += strlen(sessionList[i]->clientIDs[j]);
+									list_response.data[loc] = '\n';
+									loc++;
+								}
 							}
 							list_response.data[loc] = '\0';
 							send(i, &list_response, sizeof(message), 0);

@@ -18,7 +18,7 @@ int main(int argc, char** argv){
     char *buffer = (char *)malloc(BUFFER_SIZE);
     prompt_userinput(buffer, &BUFFER_SIZE);
     int sockfd = -1;
-    char *username = NULL;
+    char *username = NULL, *in_session = NULL;
     while(strcmp(buffer, QUIT_COMMAND) != 0){
         int arg = 0;
         char *command, place_holder[BUFFER_SIZE];
@@ -98,7 +98,6 @@ int main(int argc, char** argv){
                         arg++;
                     }
                 }
-
                 if(arg > 2){
                     printf("You entered too many arguments, try again\n");
                 }
@@ -112,11 +111,13 @@ int main(int argc, char** argv){
                     strcpy((char *)join_sess_request.source, username);
                     strcpy((char *)join_sess_request.data, session_name);
                     send(sockfd, &join_sess_request, sizeof(message), 0);
+                    if(in_session == NULL){ 
+                        in_session = (char *) malloc(MAX_NAME);
+                    }
+                    strcpy(in_session, session_name);
                 }
 
             }
-
-
         }
         else if(strcmp(command, LEAVE_SESSION_COMMAND) == 0){
             if(sockfd == -1){
@@ -132,6 +133,8 @@ int main(int argc, char** argv){
                     strcpy((char *)leave_sess_request.source, username);
                     strcpy((char *)leave_sess_request.data, "");//session name is not needed
                     send(sockfd, &leave_sess_request, sizeof(message), 0);
+                    free(in_session);
+                    in_session = NULL;
                 }
             }
         }
@@ -167,6 +170,8 @@ int main(int argc, char** argv){
                     strcpy((char *)new_sess_request.source, username);
                     strcpy((char *)new_sess_request.data, session_name);
                     send(sockfd, &new_sess_request, sizeof(message), 0);
+                    in_session = (char *) malloc(MAX_NAME);
+                    strcpy(in_session, session_name);
                 }
             }
         }
@@ -201,7 +206,25 @@ int main(int argc, char** argv){
             }
         }
         prompt_userinput(buffer, &BUFFER_SIZE);
+        if(strcmp(buffer, QUIT_COMMAND) == 0 && sockfd != -1){
+            message quit_request;
+            if(in_session != NULL){
+                quit_request.type = LEAVE_SESS;
+                strcpy((char *)quit_request.source, username);
+                strcpy((char *)quit_request.data, in_session);
+                send(sockfd, &quit_request, sizeof(message), 0);
+            }
+            if(sockfd != -1){
+                quit_request.type = EXIT;
+                strcpy((char *)quit_request.source, username);
+                send(sockfd, &quit_request, sizeof(message), 0);
+                close(sockfd);
+            }
+            
+
+        }
     }
+    free(in_session);
     free(username);
     free(buffer);
 

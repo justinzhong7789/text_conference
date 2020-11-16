@@ -38,7 +38,8 @@ enum type{
     NS_ACK = 9,
     MESSAGE =10,
     QUERY = 11,
-    QU_ACK = 12
+    QU_ACK = 12,
+    QUIT
 };
 
 void print_t(int a);
