@@ -41,9 +41,11 @@ int findSessionOfClient(struct sessionNode** sessionList, int* listSize, char* c
 
 //Return the index of client, given client ID and its session
 int findIdxOfClient(struct sessionNode** sessionList, char* clientID, int sessionIdx){
+	printf("Looking for index of client ID within cliend ID list.\n");
 	assert(sessionList[sessionIdx]);
 	for (int j = 0; j<MAXNUMCLIENTS; j++){
 		if(strcmp(sessionList[sessionIdx]->clientIDs[j], clientID)==0){
+			printf("Found client ID match at index %d.\n", j);
 			return j;
 		}
 	}
@@ -52,20 +54,21 @@ int findIdxOfClient(struct sessionNode** sessionList, char* clientID, int sessio
 
 //Remove client ID, and shift the rest of clients forward in the list
 void removeClientID(struct sessionNode** sessionList, int clientIdx, int sessionIdx){
-	assert(sessionList[sessionIdx]);
-	assert(strcmp(sessionList[sessionIdx]->clientIDs[clientIdx], "")!=0); //ensure client ID is not null
-	memset(sessionList[sessionIdx]->clientIDs[clientIdx],0,MAXNUMCLIENTS);//Clear the entry
+	printf("Removing Client ID %d from session %d.\n", clientIdx, sessionIdx);
+	assert(sessionList[sessionIdx]!=NULL);
+	//assert(strcmp(sessionList[sessionIdx]->clientIDs[clientIdx], "")!=0); //ensure client ID is not empty
+	strcpy(sessionList[sessionIdx]->clientIDs[clientIdx],"");//Clear the entry
 	//Shift the rest of the client IDs forward 
-	for(int j=clientIdx; j<sessionList[sessionIdx]->curNumClients-1; j++){
+	for(int j=clientIdx; j<MAXNUMCLIENTS-1; j++){
 		strcpy(sessionList[sessionIdx]->clientIDs[j], sessionList[sessionIdx]->clientIDs[j+1]);
 	}
 	//Decrement the number of clients
-	sessionList[sessionIdx]->curNumClients--;
+	sessionList[sessionIdx]->curNumClients = sessionList[sessionIdx]->curNumClients - 1;
 }
 
-//Delete session, given a socket number
+//Delete session, given a session index number
 void deleteSession(struct sessionNode** sessionList, int* listSize, int sessionIdx){
-	printf("Deleting session with index %d\n", sessionIdx);
+	printf("Deleting session with index %d, list size%d\n", sessionIdx, *listSize);
 	//Free the session node
 	free(sessionList[sessionIdx]->sessionName);
 	free(sessionList[sessionIdx]->sockfds);
@@ -73,10 +76,10 @@ void deleteSession(struct sessionNode** sessionList, int* listSize, int sessionI
 		free(sessionList[sessionIdx]->clientIDs[n]);
 	}
 	free(sessionList[sessionIdx]->clientIDs);
-	free(sessionList[sessionIdx]);
+	//free(sessionList[sessionIdx]);
 
 	//Move the rest of sessions forward
-	for (int i=sessionIdx; i<*listSize-1; i++){
+	for (int i=sessionIdx; i<MAXNUMSESSIONS-1; i++){
 		sessionList[i]=sessionList[i+1];
 	}
 
@@ -102,20 +105,23 @@ void deleteAllSessions(struct sessionNode** sessionList){
 }
 
 void printAllSessions(struct sessionNode** sessionList, int* listSize){
+	printf("Printing all sessions, list size %d", *listSize);
 	for (int i = 0; i<*listSize; i++){
-		assert(sessionList[i]);
-		printf("Session Name: %s\n",sessionList[i]->sessionName);
-		printf("Session IP Address: %s\n", sessionList[i]->IPAddress);
-		printf("Session client IDs: ");
-		for (int j=0; j<sessionList[i]->curNumClients; j++){
-			printf("%s ", sessionList[i]->clientIDs[j]);
-		}
-		printf(".\n");
+		if(sessionList[i]!=NULL){
+			printf("Session Name: %s\n",sessionList[i]->sessionName);
+			printf("Session IP Address: %s\n", sessionList[i]->IPAddress);
+			printf("Current number of clients: %d\n", sessionList[i]->curNumClients);
+			printf("Session client IDs: ");
+			for (int j=0; j<sessionList[i]->curNumClients; j++){
+				printf("%s ", sessionList[i]->clientIDs[j]);
+			}
+			printf(".\n");
 
-		printf("Session sockfd: ");
-		for (int k=0; k<sessionList[i]->curNumClients; k++){
-			printf("%d ", sessionList[i]->sockfds[k]);
+			printf("Session sockfd: ");
+			for (int k=0; k<sessionList[i]->curNumClients; k++){
+				printf("%d ", sessionList[i]->sockfds[k]);
+			}
+			printf(".\n");
 		}
-		printf(".\n");
 	}
 }

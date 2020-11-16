@@ -132,9 +132,6 @@ int main(int argc, char** argv){
 							char* sessionName = (char*)buffer.data;
 							char* clientID = (char*)buffer.source; //username
 							printf("Session name %s, client ID %s.\n",sessionName, clientID);
-							printf("-----------Session List ---------\n");
-							printAllSessions(sessionList, &curSessionSize);
-							printf("---------------------------------\n");
 
 							//Look for the session of the client
 							if (findSessionOfClient(sessionList, &curSessionSize, clientID) !=-1){
@@ -150,9 +147,13 @@ int main(int argc, char** argv){
 							//Insert sockID to the session
 							sessionList[sessionIdx]->sockfds[sessionList[sessionIdx]->curNumClients]=sockfd;
 							//Insert client ID to the session
-							sessionList[sessionIdx]->clientIDs[sessionList[sessionIdx]->curNumClients]=clientID;
-							sessionList[sessionIdx]->curNumClients++;
+							strcpy(sessionList[sessionIdx]->clientIDs[sessionList[sessionIdx]->curNumClients], clientID);
+							sessionList[sessionIdx]->curNumClients =sessionList[sessionIdx]->curNumClients+1;
 							printf("Client %s joined session %s.\n", clientID, sessionName);
+
+							printf("-----------Session List ---------\n");
+							printAllSessions(sessionList, &curSessionSize);
+							printf("---------------------------------\n");
 
 						}
 						else if(buffer.type == NEW_SESS){
@@ -205,13 +206,18 @@ int main(int argc, char** argv){
 								printf("Client did not connect to any session.\n");
 								continue;
 							}
-							printf("Client %s left the session.\n", clientID);
+							printf("Client %s leaving the session.\n", clientID);
 							int clientIdx = findIdxOfClient(sessionList, clientID, sessionIdx);//helper function in session.c
 							removeClientID(sessionList, clientIdx, sessionIdx);
+
 							//Free session node if all clients have left
 							if (sessionList[sessionIdx]->curNumClients==0){
 								deleteSession(sessionList, &curSessionSize, sessionIdx);
 							}
+							printf("-----------Session List ---------\n");
+							printAllSessions(sessionList, &curSessionSize);
+							printf("---------------------------------\n");
+							
 						}
 						else if(buffer.type == MESSAGE){
 							//check if client is in any session
