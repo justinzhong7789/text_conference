@@ -130,20 +130,40 @@ int main(int argc, char** argv){
 
 						}
 						else if(buffer.type == JOIN){
-
-							
-						}
-						else if(buffer.type == NEW_SESS){
 							char* sessionName = (char*)buffer.data;
 							char* clientID = (char*)buffer.source;
+							//Look for the session client is in
+							if (findSessionOfClient(sessionList, &curSessionSize, clientID) !=-1){
+								printf("Client already joined a session\n");
+								continue;
+							} 
+							//Look for session in existing list
+							int sessionIdx = findSessionByName (sessionList, &curSessionSize, sessionName);
+							if (sessionIdx==-1){
+								printf("Session does not exist.\n");
+								continue;
+							}
+							//Insert client ID to the session
+							sessionList[sessionIdx]->clientIDs[sessionList[sessionIdx]->curNumClients]=clientID;
+							sessionList[sessionIdx]->curNumClients++;
+						}
+						else if(buffer.type == NEW_SESS){
+							//Need to modify message in client
+							char* sessionName = (char*)buffer.data;
+							char* clientID = (char*)buffer.source;
+							//Validate Client ID
+							if (strcmp(clientID, "")==0){
+								printf("Client ID is empty.\n");
+								continue;
+							}
 							//Look for client in already connected sessions
-							if (findSessionOfClient(sessionList, &curSessionSize, clientID)==-1){
-								printf("Client already joined a session");
+							if (findSessionOfClient(sessionList, &curSessionSize, clientID)!=-1){
+								printf("Client already joined a session.\n");
 								continue;
 							}
 							//Look for the session in the existing list
-							if (findSessionByName(sessionList, &curSessionSize, sessionName)==-1){
-								printf("Session already exist.\n");
+							if (findSessionByName(sessionList, &curSessionSize, sessionName)!=-1){
+								printf("Session exists.\n");
 								continue;
 							}
 							//Session has not been created
@@ -156,7 +176,7 @@ int main(int argc, char** argv){
 							strcpy(newSession->clientIDs[0], clientID);
 							newSession->curNumClients=1;
 							newSession->sockfd = sockfd;
-
+							//Insert to the session list
 							if (insertSession(sessionList, &curSessionSize, newSession)==-1){
 								printf("Can not insert.\n");
 								continue;
@@ -165,8 +185,20 @@ int main(int argc, char** argv){
 							
 						}
 						else if(buffer.type == LEAVE_SESS){
+							char* clientID = (char*)buffer.source;
+							//Look for client in already connected sessions
+							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, clientID);
+							if (sessionIdx==-1){
+								printf("Client did not connect to any session.\n");
+								continue;
+							}
+							int clientIdx = findIdxOfClient(sessionList, clientID, sessionIdx);//helper function in session.c
+							removeClientID(sessionList, clientIdx, sessionIdx);
+							//Free session node if all clients have left
+							if (sessionList[sessionIdx]->curNumClients==0){
+								deleteSession(sessionList, sessionIdx);
+							}
 
-							
 						}
 						else if(buffer.type == MESSAGE){
 							//check if client is in any session

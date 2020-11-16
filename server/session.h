@@ -26,7 +26,9 @@ struct sessionNode{
 int insertSession(struct sessionNode** sessionList, int* listSize, struct sessionNode* newSession);
 int findSessionByName(struct sessionNode** sessionList, int* listSize, char* thisSessionName);
 int findSessionOfClient(struct sessionNode** sessionList, int* listSize, char* clientID);
-int deleteSession(struct sessionNode** sessionList, int* listSize, int thisSockfd);
+int findIdxOfClient(struct sessionNode**sessionList, char* clientID, int sessionIdx);
+void removeClientID(struct sessionNode** sessionList, int clientIdx, int sessionIdx);
+void deleteSession(struct sessionNode** sessionList, int sessionIdx);
 void deleteAllSessions(struct sessionNode** sessionList);
 void printAllSessions(struct sessionNode** sessionList, int* listSize);
 
