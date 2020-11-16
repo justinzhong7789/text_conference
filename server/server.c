@@ -237,7 +237,8 @@ int main(int argc, char** argv){
 							for (int n=0; n<sessionList[sessionIdx]->curNumClients; n++){
 								//char* curClientID = sessionList[sessionIdx]->clientIDs[n];
 								//send the message to this client
-								send(sessionList[sessionIdx]->sockfds[n], &context, sizeof(message),0);
+								//sockfd invalid, broken pipe
+								//send(sessionList[sessionIdx]->sockfds[n], &context, sizeof(message),0);
 							}
 						}
 
@@ -267,7 +268,7 @@ int main(int argc, char** argv){
 							for(int i=0;i<curSessionSize;i++){
 								strcpy((char *)list_response.data+loc, sessionList[i]->sessionName);
 								loc+=strlen(sessionList[i]->sessionName);
-								list_reponse.data[loc] = ':';
+								list_response.data[loc] = ':';
 								loc++;
 								list_response.data[loc] = '\n';
 								loc++;
@@ -282,6 +283,7 @@ int main(int argc, char** argv){
 							}
 							list_response.data[loc] = '\0';
 							send(i, &list_response, sizeof(message), 0);
+							
 						}
 						else {
 							perror("Message type not recognized");
