@@ -105,11 +105,11 @@ int main(int argc, char** argv){
                     printf("You entered too few arguments, try again\n");
                 }
                 else{
-                    message join_request;
-                    join_request.type = JOIN;
-                    strcpy((char *)join_request.source, username);
-                    strcpy((char *)join_request.data, session_name);
-                    send(sockfd, &join_request, sizeof(message), 0);
+                    message join_sess_request;
+                    join_sess_request.type = JOIN;
+                    strcpy((char *)join_sess_request.source, username);
+                    strcpy((char *)join_sess_request.data, session_name);
+                    send(sockfd, &join_sess_request, sizeof(message), 0);
                 }
 
             }
@@ -117,11 +117,57 @@ int main(int argc, char** argv){
 
         }
         else if(strcmp(command, LEAVE_SESSION_COMMAND) == 0){
-            
-
+            if(sockfd == -1){
+                printf("You are not connected to any server yet. Login first!\n");
+            }else{
+                if(arg >= 2){
+                    printf("You entered too many arguments, try again\n");
+                } else{
+                    //Leave session
+                    printf("Client %s leaving session.\n", username);
+                    message leave_sess_request;
+                    leave_sess_request.type = LEAVE_SESS;
+                    strcpy((char *)leave_sess_request.source, username);
+                    strcpy((char *)leave_sess_request.data, "");//session name is not needed
+                    send(sockfd, &leave_sess_request, sizeof(message), 0);
+                }
+            }
         }
         else if(strcmp(command, CREATE_SESSION_COMMAND)==0){
             //char *session_name = strtok(NULL, SPACE);
+            if(sockfd == -1){
+                printf("You are not connected to any server yet. Login first!\n");
+            }else{
+                //create new Session
+                char *session_name, *argument;
+                argument = strtok(NULL, SPACE);
+                arg++;
+                while (argument != NULL)
+                {
+                    if(arg == 2){
+                        session_name = argument;
+                    }
+                    argument = strtok(NULL, SPACE);
+                    if(argument != NULL){
+                        arg++;
+                    }
+                }
+                printf("session name in client: %s\n",session_name);
+
+                if(arg > 2){
+                    printf("You entered too many arguments, try again\n");
+                }
+                else if(arg<2){
+                    printf("You entered too few arguments, try again\n");
+                }
+                else{
+                    message new_sess_request;
+                    new_sess_request.type = NEW_SESS;
+                    strcpy((char *)new_sess_request.source, username);
+                    strcpy((char *)new_sess_request.data, session_name);
+                    send(sockfd, &new_sess_request, sizeof(message), 0);
+                }
+            }
         }
         else if(strcmp(command, LIST_COMMAND) == 0){
 
