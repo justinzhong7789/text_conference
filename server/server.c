@@ -145,9 +145,13 @@ int main(int argc, char** argv){
 								printf("Session does not exist.\n");
 								continue;
 							}
+							//Insert sockID to the session
+							sessionList[sessionIdx]->sockfds[sessionList[sessionIdx]->curNumClients]=sockfd;
 							//Insert client ID to the session
 							sessionList[sessionIdx]->clientIDs[sessionList[sessionIdx]->curNumClients]=clientID;
 							sessionList[sessionIdx]->curNumClients++;
+							printf("Client %s joined session %s.\n", clientID, sessionName);
+
 						}
 						else if(buffer.type == NEW_SESS){
 							//Need to modify message in client
@@ -171,13 +175,14 @@ int main(int argc, char** argv){
 							//Session has not been created
 							struct sessionNode* newSession = (struct sessionNode*)malloc(sizeof(struct sessionNode));
 							newSession->sessionName= sessionName;
+							newSession->sockfds  = (int*)malloc(MAXNUMCLIENTS*sizeof(int));
+							newSession->sockfds[0]=sockfd;
 							newSession->clientIDs = (char**)malloc(MAXNUMCLIENTS*sizeof(char*));
 							for(int n=0; n<MAXNUMCLIENTS; n++){
 								newSession->clientIDs[n]=malloc(MAXSIZECLIENTID*sizeof(char));
 							}
 							strcpy(newSession->clientIDs[0], clientID);
 							newSession->curNumClients=1;
-							newSession->sockfd = sockfd;
 							//Insert to the session list
 							if (insertSession(sessionList, &curSessionSize, newSession)==-1){
 								printf("Can not insert.\n");
@@ -194,30 +199,34 @@ int main(int argc, char** argv){
 								printf("Client did not connect to any session.\n");
 								continue;
 							}
+
 							int clientIdx = findIdxOfClient(sessionList, clientID, sessionIdx);//helper function in session.c
 							removeClientID(sessionList, clientIdx, sessionIdx);
 							//Free session node if all clients have left
 							if (sessionList[sessionIdx]->curNumClients==0){
 								deleteSession(sessionList, &curSessionSize, sessionIdx);
 							}
-
+							printf("Client %s left the session.\n", clientID);
 						}
+
 						else if(buffer.type == MESSAGE){
-							char* clientID = (char*)buffer.source;
-							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, clientID); //Index of the session client is in
-							int clientIdx = findIdxOfClient(sessionList, clientID, sessionIdx);//Index of client in clientID list
 							//check if client is in any session
-							if (clientIdx==-1){
-								printf("Client is not connected to any session.\n");
+							char* clientID = (char*)buffer.source;
+							char* clientMsg = (char*)buffer.data;
+							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, clientID); //Find the index of session client is in
+							if (sessionIdx==-1){
+								printf("Client did not connect to any session.\n");
 								continue;
 							}
-							//Find socket address, given client ID
-
-
-							//send the message to all clients in the session
-
 							printf("%s said: %s\n", buffer.source, buffer.data);							
+							//Iterate through all client IDs in this session
+							for (int n=0; n<sessionList[sessionIdx]->curNumClients; n++){
+								//char* curClientID = sessionList[sessionIdx]->clientIDs[n];
+								//send the message to this client
+								send(sessionList[sessionIdx]->sockfds[n], clientMsg, strlen(clientMsg),0);
+							}
 						}
+
 						else if(buffer.type == QUERY){
 							printf("\tAll connected client(s):\n");
 							connected_client *p;

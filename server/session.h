@@ -17,8 +17,8 @@ struct sessionNode{
     char* sessionName;
     char* IPAddress;
     int port;
-    int sockfd;
-    char** clientIDs;
+    int* sockfds; //list of sockfds
+    char** clientIDs; //list of cliend IDs, indexes are same as list of sockfd
     int curNumClients;
 };
 
