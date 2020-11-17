@@ -237,3 +237,17 @@ void printConnectedClientList(connected_client **p){
         printf("%d : %s\t%d\n", i, t->user_id, t->fd);
     }
 }
+
+bool clientAlreadyConnected(connected_client **list, char *username){
+    connected_client *p;
+    if(*list == NULL){
+        return false;
+    }
+    for(p = *list;p!=NULL; p++){
+        if(strcmp(p->user_id, username) == 0){
+            return true;
+        }
+    }
+    return false;
+
+}

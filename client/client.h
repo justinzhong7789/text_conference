@@ -14,11 +14,14 @@
 #include <sys/wait.h>
 
 #include "../message.h"
+#define STDIN 0
+
 
 void prompt();
 void *get_in_addr(struct sockaddr *sa);
-void prompt_userinput(char *buffer, size_t *size);
+void prompt_userinput(char *buffer, size_t *size, fd_set *set, int fdmax);
 int C_connection_setup(char *ip, char *port);
+
 
 bool connected = false;
 char SPACE[] = " ";
@@ -34,14 +37,35 @@ char QUIT_COMMAND[] = "/quit",
 
 void prompt(){
 	printf("\t>>>");
+	fflush(stdout);
 }
 	 
-void prompt_userinput(char *buffer, size_t *size){
+void prompt_userinput(char *buffer, size_t *size, fd_set *set, int fdmax){
 	prompt();
-    getline(&buffer, size, stdin);
-    if(buffer[strlen(buffer)-1] == '\n'){
-        buffer[strlen(buffer)-1] = '\0';
-    }
+	if(select(fdmax+1, set, NULL,NULL,NULL) == -1){
+		perror("select");
+		exit(4);
+	}
+	for(int i=0;i<=fdmax;i++){
+		if(FD_ISSET(i, set)){
+			if(i == STDIN){
+				fflush(stdin);
+				getline(&buffer, size, stdin);
+    			if(buffer[strlen(buffer)-1] == '\n'){
+        			buffer[strlen(buffer)-1] = '\0';
+    			}
+				break;
+			}
+			else{
+				message temp_buffer;
+				recv(i, &temp_buffer, sizeof(message), 0);
+				printf("\nNew message from %s:\n\t%s\n", temp_buffer.source, temp_buffer.data);
+				fflush(stdout);
+				break;
+			}
+		}
+	}
+    
 }
 
 //return socket file descriptor or -1 on connection error

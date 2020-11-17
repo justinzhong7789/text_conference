@@ -63,29 +63,39 @@ int main(int argc, char** argv){
 						if(numBytes != -1){
 							
 							if(buffer.type == LOGIN){
-								int check_pw = checkPW((char *)buffer.source, (char *)buffer.data);
 								message response;
-								if(check_pw == 0){
-									//pw is correct, send ACK, keep connection
+								if(clientAlreadyConnected(connected_clients_list, (char *)buffer.source)){
 									response.type = LO_ACK;
 									strcpy((char *)response.source, SERVER);
-									strcpy((char *)response.data, "Login credentials match. Login successful\n");
+									strcpy((char *)response.data, "You have already logged in!\n");
 									send(new_fd, &response, sizeof(message), 0);
-									FD_SET(new_fd, &master);
-									fdmax = (new_fd>fdmax)? new_fd: fdmax;	
-									connected_client *new_client = create_client(new_fd, income_addr);
-									strcpy(new_client->user_id, (char*)buffer.source);
-									registerClient(connected_clients_list, new_client);							}
-								else{
-									//username is not found in the database
-									//send NACK
-									response.type = LO_NAK;
-									strcpy((char *)response.source, SERVER);
-									(check_pw == -2) ? strcpy((char *)response.data, "Username not found\n") :
-													   strcpy((char *)response.data, "Login credentials don't  match\n");
-									send(new_fd, &response, sizeof(message), 0);
-									close(new_fd);
+									continue;
 								}
+								else {
+									int check_pw = checkPW((char *)buffer.source, (char *)buffer.data);
+									if(check_pw == 0){
+									//pw is correct, send ACK, keep connection
+										response.type = LO_ACK;
+										strcpy((char *)response.source, SERVER);
+										strcpy((char *)response.data, "Login credentials match. Login successful\n");
+										send(new_fd, &response, sizeof(message), 0);
+										FD_SET(new_fd, &master);
+										fdmax = (new_fd>fdmax)? new_fd: fdmax;	
+										connected_client *new_client = create_client(new_fd, income_addr);
+										strcpy(new_client->user_id, (char*)buffer.source);
+										registerClient(connected_clients_list, new_client);							}
+									else{
+										//username is not found in the database
+										//send NACK
+										response.type = LO_NAK;
+										strcpy((char *)response.source, SERVER);
+										(check_pw == -2) ? strcpy((char *)response.data, "Username not found\n") :
+														   strcpy((char *)response.data, "Login credentials don't  match\n");
+										send(new_fd, &response, sizeof(message), 0);
+										close(new_fd);
+									}
+								}
+								
 							}
 						}
 						else{
@@ -221,12 +231,12 @@ int main(int argc, char** argv){
 						}
 						else if(buffer.type == MESSAGE){
 							//check if client is in any session
-							char* clientID = (char*)buffer.source;
-							char* clientMsg = (char*)buffer.data;
-							message context;
-							strcpy((char *)context.source, clientID);
-							strcpy((char *)context.data, clientMsg);
-							context.size = strlen(clientMsg);
+							//char* clientID = (char*)buffer.source;
+							//char* clientMsg = (char*)buffer.data;
+							//message context;
+							//strcpy((char *)context.source, clientID);
+							//strcpy((char *)context.data, clientMsg);
+							//context.size = strlen(clientMsg);
 							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, clientID); //Find the index of session client is in
 							if (sessionIdx==-1){
 								printf("Client did not connect to any session.\n");
@@ -237,7 +247,7 @@ int main(int argc, char** argv){
 							for (int n=0; n<sessionList[sessionIdx]->curNumClients; n++){
 								//char* curClientID = sessionList[sessionIdx]->clientIDs[n];
 								//send the message to this client
-								send(sessionList[sessionIdx]->sockfds[n], &context, sizeof(message),0);
+								send(sessionList[sessionIdx]->sockfds[n], &buffer, sizeof(message),0);
 							}
 						}
 
@@ -253,6 +263,8 @@ int main(int argc, char** argv){
 							strcpy((char *)list_response.data + loc, prompt1);
 							loc += strlen(prompt1);
 							for(p=*connected_clients_list; p!=NULL; p=p->next){
+								list_response.data[loc] = '\t';
+								loc++;
 								strcpy((char *)list_response.data+loc, p->user_id);
 								loc+=strlen(p->user_id);
 								list_response.data[loc] = '\n';
@@ -267,7 +279,7 @@ int main(int argc, char** argv){
 							for(int i=0;i<curSessionSize;i++){
 								strcpy((char *)list_response.data+loc, sessionList[i]->sessionName);
 								loc+=strlen(sessionList[i]->sessionName);
-								list_reponse.data[loc] = ':';
+								list_response.data[loc] = ':';
 								loc++;
 								list_response.data[loc] = '\n';
 								loc++;

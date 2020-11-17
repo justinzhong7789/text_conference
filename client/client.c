@@ -12,13 +12,21 @@
 #include <time.h>
 
 #include "client.h"
+
 int main(int argc, char** argv){
 
-    size_t BUFFER_SIZE = 2000;
+    size_t BUFFER_SIZE = 2000, buffer_size_temp;
     char *buffer = (char *)malloc(BUFFER_SIZE);
-    prompt_userinput(buffer, &BUFFER_SIZE);
-    int sockfd = -1;
+    fd_set master, temp;
+    FD_ZERO(&master);
+    FD_ZERO(&temp);
+    FD_SET(STDIN, &master);
+    int sockfd = -1, fdmax = STDIN;
+    temp = master;
+    buffer_size_temp = BUFFER_SIZE;
+    prompt_userinput(buffer, &buffer_size_temp, &temp, fdmax );
     char *username = NULL, *in_session = NULL;
+    
     while(strcmp(buffer, QUIT_COMMAND) != 0){
         int arg = 0;
         char *command, place_holder[BUFFER_SIZE];
@@ -176,12 +184,20 @@ int main(int argc, char** argv){
             }
         }
         else if(strcmp(command, LIST_COMMAND) == 0){
-            message list_request, response;
-            list_request.type = QUERY;
-            strcpy((char *)list_request.source, username);
-            send(sockfd, &list_request, sizeof(message), 0);
-            recv(sockfd, &response, sizeof(message), 0);
-            printf("%s\n", response.data);
+            if(sockfd == -1){
+                printf("You are not connected to a server yet!\n");
+                fflush(stdout);
+            }
+            else{
+                message list_request, response;
+                list_request.type = QUERY;
+                strcpy((char *)list_request.source, username);
+                send(sockfd, &list_request, sizeof(message), 0);
+                
+                recv(sockfd, &response, sizeof(message), 0);
+                printf("%s\n", response.data);
+                fflush(stdout);
+            }
         }
         else{
             //send plain text
@@ -193,19 +209,30 @@ int main(int argc, char** argv){
                     printf("Your username is unclear\n");
                 }
                 else{
-                    
                     message chat;
                     chat.type = MESSAGE;
                     strcpy((char *)chat.source, username);
                     strcpy((char *)chat.data, buffer);
                     send(sockfd, &chat, sizeof(message), 0);
-                    
                 }
                 
 
             }
         }
-        prompt_userinput(buffer, &BUFFER_SIZE);
+        temp = master;
+        if(sockfd != -1){
+            FD_SET(sockfd, &temp);
+            fdmax = sockfd+1;
+        }
+        else{
+            fdmax = STDIN;
+        }
+        buffer_size_temp = BUFFER_SIZE;
+        prompt_userinput(buffer, &buffer_size_temp, &temp, fdmax);
+        while(buffer_size_temp == 0){
+            prompt_userinput(buffer, &buffer_size_temp, &temp, fdmax);
+        }
+        
         if(strcmp(buffer, QUIT_COMMAND) == 0 && sockfd != -1){
             message quit_request;
             if(in_session != NULL){
@@ -220,8 +247,6 @@ int main(int argc, char** argv){
                 send(sockfd, &quit_request, sizeof(message), 0);
                 close(sockfd);
             }
-            
-
         }
     }
     free(in_session);
