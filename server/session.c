@@ -105,7 +105,7 @@ void deleteAllSessions(struct sessionNode** sessionList){
 }
 
 void printAllSessions(struct sessionNode** sessionList, int* listSize){
-	printf("Printing all sessions, list size %d", *listSize);
+	printf("Printing all sessions, list size %d\n", *listSize);
 	for (int i = 0; i<*listSize; i++){
 		if(sessionList[i]!=NULL){
 			printf("Session Name: %s\n",sessionList[i]->sessionName);
@@ -115,7 +115,7 @@ void printAllSessions(struct sessionNode** sessionList, int* listSize){
 			for (int j=0; j<sessionList[i]->curNumClients; j++){
 				printf("%s ", sessionList[i]->clientIDs[j]);
 			}
-			printf(".\n");
+			printf("\n");
 
 			printf("Session sockfd: ");
 			for (int k=0; k<sessionList[i]->curNumClients; k++){

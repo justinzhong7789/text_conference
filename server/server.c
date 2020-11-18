@@ -53,6 +53,7 @@ int main(int argc, char** argv){
 					//new connection request
 					sockaddrlen = sizeof(struct sockaddr_storage);
 					int new_fd = accept(sockfd, (struct sockaddr *)&income_addr, &sockaddrlen);
+					printf("New sockfd is: %d", new_fd);
 					if(new_fd == -1){
 						perror("accept");
 					}
@@ -74,7 +75,7 @@ int main(int argc, char** argv){
 								else {
 									int check_pw = checkPW((char *)buffer.source, (char *)buffer.data);
 									if(check_pw == 0){
-									//pw is correct, send ACK, keep connection
+										//pw is correct, send ACK, keep connection
 										response.type = LO_ACK;
 										strcpy((char *)response.source, SERVER);
 										strcpy((char *)response.data, "Login credentials match. Login successful\n");
@@ -148,6 +149,10 @@ int main(int argc, char** argv){
 								printf("Client already joined a session\n");
 								continue;
 							} 
+							if(!clientAlreadyConnected(connected_clients_list, clientID)){
+								printf("Client isn't connected\n");
+								continue;
+							}
 							//Look for session in existing list
 							int sessionIdx = findSessionByName (sessionList, &curSessionSize, sessionName);
 							if (sessionIdx==-1){
@@ -155,7 +160,14 @@ int main(int argc, char** argv){
 								continue;
 							}
 							//Insert sockID to the session
-							sessionList[sessionIdx]->sockfds[sessionList[sessionIdx]->curNumClients]=sockfd;
+							connected_client *p;
+							for(p = *connected_clients_list; p!=NULL;p = p->next){
+								if(strcmp(p->user_id, clientID) == 0){
+									sessionList[sessionIdx]->sockfds[sessionList[sessionIdx]->curNumClients]=p->fd;
+								}
+								
+							}
+							
 							//Insert client ID to the session
 							strcpy(sessionList[sessionIdx]->clientIDs[sessionList[sessionIdx]->curNumClients], clientID);
 							sessionList[sessionIdx]->curNumClients =sessionList[sessionIdx]->curNumClients+1;
@@ -190,7 +202,13 @@ int main(int argc, char** argv){
 							newSession->sessionName = (char*)malloc(MAXSIZESESSIONNAME*sizeof(char));
 							strcpy(newSession->sessionName, sessionName);
 							newSession->sockfds  = (int*)malloc(MAXNUMCLIENTS*sizeof(int));
-							newSession->sockfds[0]=sockfd;
+							connected_client *p;
+							for(p = *connected_clients_list;p !=NULL;p= p->next){
+								if(strcmp(p->user_id, clientID) == 0){
+									newSession->sockfds[0]= p->fd;
+								}
+							}
+							
 							newSession->clientIDs = (char**)malloc(MAXNUMCLIENTS*sizeof(char*));
 							for(int n=0; n<MAXNUMCLIENTS; n++){
 								newSession->clientIDs[n]=malloc(MAXSIZECLIENTID*sizeof(char));
@@ -237,17 +255,28 @@ int main(int argc, char** argv){
 							//strcpy((char *)context.source, clientID);
 							//strcpy((char *)context.data, clientMsg);
 							//context.size = strlen(clientMsg);
-							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, clientID); //Find the index of session client is in
+							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, (char *)buffer.source); //Find the index of session client is in
 							if (sessionIdx==-1){
 								printf("Client did not connect to any session.\n");
 								continue;
 							}
-							printf("%s said: %s\n", buffer.source, buffer.data);							
+							printf("%s said: %s--\n", buffer.source, buffer.data);
+									
 							//Iterate through all client IDs in this session
 							for (int n=0; n<sessionList[sessionIdx]->curNumClients; n++){
 								//char* curClientID = sessionList[sessionIdx]->clientIDs[n];
 								//send the message to this client
-								send(sessionList[sessionIdx]->sockfds[n], &buffer, sizeof(message),0);
+								
+								if(strcmp(sessionList[sessionIdx]->clientIDs[n], (char *)buffer.source) != 0){
+									message temp;
+									temp.type = MESSAGE;
+									strcpy((char *)temp.source, (char *)buffer.source);
+									strcpy((char *)temp.data, (char *)buffer.data);
+									printf("sending to : %s\n", sessionList[sessionIdx]->clientIDs[n]);
+									send(sessionList[sessionIdx]->sockfds[n], &temp, sizeof(message),0);
+								}
+								//sockfd invalid, broken pipe
+								//send(sessionList[sessionIdx]->sockfds[n], &context, sizeof(message),0);
 							}
 						}
 
@@ -294,6 +323,7 @@ int main(int argc, char** argv){
 							}
 							list_response.data[loc] = '\0';
 							send(i, &list_response, sizeof(message), 0);
+							
 						}
 						else {
 							perror("Message type not recognized");

@@ -17,14 +17,13 @@ int main(int argc, char** argv){
 
     size_t BUFFER_SIZE = 2000, buffer_size_temp;
     char *buffer = (char *)malloc(BUFFER_SIZE);
-    fd_set master, temp;
+    fd_set master;
     FD_ZERO(&master);
-    FD_ZERO(&temp);
     FD_SET(STDIN, &master);
     int sockfd = -1, fdmax = STDIN;
-    temp = master;
+
     buffer_size_temp = BUFFER_SIZE;
-    prompt_userinput(buffer, &buffer_size_temp, &temp, fdmax );
+    prompt_userinput(buffer, &buffer_size_temp, fdmax );
     char *username = NULL, *in_session = NULL;
     
     while(strcmp(buffer, QUIT_COMMAND) != 0){
@@ -70,6 +69,7 @@ int main(int argc, char** argv){
                 if(sockfd != -1){
                     username = (char *)malloc(MAX_NAME);
                     strcpy(username, ID);
+                    printf("%d\n", sockfd);
                 }
             }
         }
@@ -172,7 +172,7 @@ int main(int argc, char** argv){
                     printf("You entered too few arguments, try again\n");
                 }
                 else{
-                    printf("Sending message to create session %s\n",session_name);
+                    //printf("Sending message to create session %s\n",session_name);
                     message new_sess_request;
                     new_sess_request.type = NEW_SESS;
                     strcpy((char *)new_sess_request.source, username);
@@ -204,6 +204,9 @@ int main(int argc, char** argv){
             if(sockfd == -1){
                 printf("You aren't connected to a server yet\n");
             }
+            else if(in_session == NULL){
+                printf("You haven't joined any session yet\n");
+            }
             else{
                 if(username == NULL){
                     printf("Your username is unclear\n");
@@ -214,23 +217,22 @@ int main(int argc, char** argv){
                     strcpy((char *)chat.source, username);
                     strcpy((char *)chat.data, buffer);
                     send(sockfd, &chat, sizeof(message), 0);
+                    printf("You said: %s\n", buffer);
                 }
-                
-
             }
         }
-        temp = master;
         if(sockfd != -1){
-            FD_SET(sockfd, &temp);
-            fdmax = sockfd+1;
+            fdmax = sockfd;
         }
         else{
             fdmax = STDIN;
         }
         buffer_size_temp = BUFFER_SIZE;
-        prompt_userinput(buffer, &buffer_size_temp, &temp, fdmax);
-        while(buffer_size_temp == 0){
-            prompt_userinput(buffer, &buffer_size_temp, &temp, fdmax);
+        fflush(stdin);
+		memset(buffer, 0, 2000);	
+        while(strlen(buffer) ==0){
+            prompt_userinput(buffer, &buffer_size_temp, fdmax);
+            fflush(stdout);
         }
         
         if(strcmp(buffer, QUIT_COMMAND) == 0 && sockfd != -1){
@@ -252,6 +254,5 @@ int main(int argc, char** argv){
     free(in_session);
     free(username);
     free(buffer);
-
     return 0;
 }

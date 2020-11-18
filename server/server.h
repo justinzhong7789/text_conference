@@ -243,7 +243,7 @@ bool clientAlreadyConnected(connected_client **list, char *username){
     if(*list == NULL){
         return false;
     }
-    for(p = *list;p!=NULL; p++){
+    for(p = *list;p!=NULL; p = p->next){
         if(strcmp(p->user_id, username) == 0){
             return true;
         }
