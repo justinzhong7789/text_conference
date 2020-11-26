@@ -323,7 +323,7 @@ int main(int argc, char** argv){
 							int from_sock = sockfd_of_client(connected_clients_list, (char *)buffer.source);
 							response.data[0] = '\0';
 							if(!clientAlreadyConnected(connected_clients_list, client_to_invite)){
-								strcpy((char *)response.data, "Client is not connected to me.\n");
+								strcpy((char *)response.data, "Client is not connected to server.\n");
 							}
 							else if(findSessionByName (sessionList, &curSessionSize, session_to_invite) == -1){
 								strcpy((char *)response.data, "Session does not exist\n");
