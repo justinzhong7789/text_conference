@@ -21,10 +21,10 @@ int main(int argc, char** argv){
     FD_ZERO(&master);
     FD_SET(STDIN, &master);
     int sockfd = -1, fdmax = STDIN;
-
     buffer_size_temp = BUFFER_SIZE;
-    prompt_userinput(buffer, &buffer_size_temp, fdmax );
     char *username = NULL, *in_session = NULL;
+    prompt_userinput(buffer, &buffer_size_temp, fdmax, username );
+    
     
     while(strcmp(buffer, QUIT_COMMAND) != 0){
         int arg = 0;
@@ -199,6 +199,51 @@ int main(int argc, char** argv){
                 fflush(stdout);
             }
         }
+
+        else if(strcmp(command, INVITATION_COMMAND) == 0){
+            message invitation, response;
+            invitation.type = INVITATION;
+            char *client_to_invite, *session, *extra_test;
+            client_to_invite = strtok(NULL, SPACE);
+            if(client_to_invite == NULL){
+                printf("You entered too few arguments, try again\n");
+            }
+            else{
+                session = strtok(NULL, SPACE);
+                if(session == NULL){
+                    printf("You entered too few arguments, try again\n");
+                }
+                else{
+                    extra_test = strtok(NULL, SPACE);
+                    if(extra_test != NULL){
+                        printf("You entered too many arguments, try again\n");
+                    }
+                    else{
+                        int loc = 0;
+                        strcpy((char *)invitation.source, username);
+                        strcpy((char *)(invitation.data+loc), client_to_invite);
+                        loc+=strlen(client_to_invite);
+                        invitation.data[loc] = ' ';
+                        loc++;
+                        strcpy((char *)(invitation.data+loc), session);
+                        loc += strlen(session);
+                        invitation.data[loc] = '\0';
+                        loc++;
+                        send(sockfd, &invitation, sizeof(message), 0);
+                        //recv ack of invitation
+                        recv(sockfd, &response, sizeof(message), 0);
+                        printf("%s\n", response.data);
+
+
+                    }
+                }
+            }
+        }
+        else if(strcmp(command, HELP_COMMAND) == 0){
+
+        }
+
+
         else{
             //send plain text
             if(sockfd == -1){
@@ -231,7 +276,7 @@ int main(int argc, char** argv){
         fflush(stdin);
 		memset(buffer, 0, 2000);	
         while(strlen(buffer) ==0){
-            prompt_userinput(buffer, &buffer_size_temp, fdmax);
+            prompt_userinput(buffer, &buffer_size_temp, fdmax, username);
             fflush(stdout);
         }
         

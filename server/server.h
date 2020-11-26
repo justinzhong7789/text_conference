@@ -251,3 +251,16 @@ bool clientAlreadyConnected(connected_client **list, char *username){
     return false;
 
 }
+
+int sockfd_of_client(connected_client **list, char *clientName){
+    connected_client *p;
+    if(*list == NULL){
+        return -1;
+    }
+    for(p = *list;p!=NULL; p = p->next){
+        if(strcmp(p->user_id, clientName) == 0){
+            return p->fd;
+        }
+    }
+    return -1;
+}

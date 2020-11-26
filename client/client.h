@@ -19,27 +19,31 @@
 
 void prompt();
 void *get_in_addr(struct sockaddr *sa);
-void prompt_userinput(char *buffer, size_t *size, int fdmax);
+void prompt_userinput(char *buffer, size_t *size, int fdmax, char *username);
 int C_connection_setup(char *ip, char *port);
 
 
 bool connected = false;
-char SPACE[] = " ";
+
 char QUIT_COMMAND[] = "/quit",
 	 LOGIN_COMMAND[] = "/login", 
 	 LOGOUT_COMMAND[] = "/logout",
 	 JOIN_SESSION_COMMAND[] = "/joinsession",
 	 LEAVE_SESSION_COMMAND[] = "/leavesession",
 	 CREATE_SESSION_COMMAND[] = "/createsession",
-	 LIST_COMMAND[] = "/list";
+	 LIST_COMMAND[] = "/list",
+	 INVITATION_COMMAND[] = "/invite",
+	 HELP_COMMAND[] = "/help";
 
+
+char HELP_MESSAGE[] = "commands: \n\t/login <username> <password> <IP> <port>\n\t";
 
 
 void prompt(){
 	printf("\t>>>");
 	fflush(stdout);
 }
-void prompt_userinput(char *buffer, size_t *size, int fdmax){
+void prompt_userinput(char *buffer, size_t *size, int fdmax, char *username){
 	prompt();
 	fd_set set;
 	FD_ZERO(&set);
@@ -69,11 +73,26 @@ void prompt_userinput(char *buffer, size_t *size, int fdmax){
 				memset(buffer, 0, 2000);
 				message temp_buffer;
 				recv(i, &temp_buffer, sizeof(message), 0);
-				printf("\nNew message from %s:\n\t%s\n", temp_buffer.source, temp_buffer.data);
-				fflush(stdout);
+				if(temp_buffer.type == MESSAGE){
+					printf("\nNew message from %s:\n\t%s\n", temp_buffer.source, temp_buffer.data);
+					fflush(stdout);
+				}
+				else if(temp_buffer.type == INVITATION){
+					int p;
+					printf("%s sent you an invitation to join conference session %s. Accept or refuse(y or n). Anything but y will be considered a refusal\n"
+																					, temp_buffer.source, temp_buffer.data);
+					fflush(stdin);
+					p = getchar();
+					if(p == 'y'){
+						message join;
+						join.type = JOIN;
+						strcpy((char *)join.source, username);
+						strcpy((char *)join.data, (char *)temp_buffer.data);
+						send(i, &join, sizeof(message), 0);
+					}
+				}
 			}
 		}
-
 	}
 }
 

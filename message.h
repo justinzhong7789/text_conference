@@ -39,9 +39,11 @@ enum type{
     MESSAGE =10,
     QUERY = 11,
     QU_ACK = 12,
-    QUIT
+    QUIT,
+    INVITATION
 };
 
+char SPACE[] = " ";
 void print_t(int a);
 
 void print_t(int a){
