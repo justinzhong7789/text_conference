@@ -28,19 +28,23 @@ int findSessionByName(struct sessionNode** sessionList, int* listSize, char* thi
 
 //Return session index, given client ID
 int* findSessionsOfClient(struct sessionNode** sessionList, int* listSize, char* clientID){
-	int result[1];
-	int length = 1; 
+	int* result = (int*)malloc(2*sizeof(int));
+	result[0] = 0; //The first number represents the size of this array
+	result[1] = -1;
+	int length = 0; 
 	
 	for (int i=0; i<*listSize; i++){
 		for (int j=0; j<MAXNUMCLIENTS; j++){
 			if(strcmp(sessionList[i]->clientIDs[j], clientID)==0){
-				result = realloc(result, )
+				length++;
+				result = realloc(result, length);
 				result[length]=i;
+				result[0] = result[0]+1;
 				//return i;
 			}
 		}
 	}
-	return -1;
+	return result;
 }
 
 //Return the index of client, given client ID and its session

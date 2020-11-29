@@ -22,7 +22,8 @@ int main(int argc, char** argv){
     FD_SET(STDIN, &master);
     int sockfd = -1, fdmax = STDIN;
     buffer_size_temp = BUFFER_SIZE;
-    char *username = NULL, *in_session = NULL;
+    char *username = NULL;
+    int sessionNum = 0;
     prompt_userinput(buffer, &buffer_size_temp, fdmax, username );
     
     
@@ -114,15 +115,24 @@ int main(int argc, char** argv){
                 }
                 else{
                     printf("Sending message to join session %s\n",session_name);
-                    message join_sess_request;
+                    message join_sess_request, response;
                     join_sess_request.type = JOIN;
                     strcpy((char *)join_sess_request.source, username);
                     strcpy((char *)join_sess_request.data, session_name);
                     send(sockfd, &join_sess_request, sizeof(message), 0);
-                    if(in_session == NULL){ 
-                        in_session = (char *) malloc(MAX_NAME);
+                    //if(in_session == NULL){ 
+                    //sessionNum++;
+                    //}
+                    //strcpy(in_sessions[sessionNum], session_name);
+
+                    recv(sockfd, &response, sizeof(message), 0);
+                    if (strcmp((char*)response.data, "Client joined the session.\n")==0){
+                        sessionNum++;
+                        printf("Joined the session. You are now in %d session(s).\n", sessionNum);
+                    }else{
+                        printf("%s", response.data);
                     }
-                    strcpy(in_session, session_name);
+
                 }
 
             }
@@ -131,18 +141,87 @@ int main(int argc, char** argv){
             if(sockfd == -1){
                 printf("You are not connected to any server yet. Login first!\n");
             }else{
+                //leave one session
+                char *session_name, *argument;
+                argument = strtok(NULL, SPACE);
+                arg++;
+                while (argument != NULL)
+                {
+                    if(arg == 2){
+                        session_name = argument;
+                    }
+                    argument = strtok(NULL, SPACE);
+                    if(argument != NULL){
+                        arg++;
+                    }
+                }
+                if(arg > 2){
+                    printf("You entered too many arguments, try again\n");
+                }
+                else if(arg<2){
+                    printf("You entered too few arguments, try again\n");
+                }
+                else{
+                    printf("Sending message to leave session %s\n",session_name);
+                    message leave_sess_request, response;
+                    leave_sess_request.type = LEAVE_SESS;
+                    strcpy((char *)leave_sess_request.source, username);
+                    strcpy((char *)leave_sess_request.data, session_name);
+                    send(sockfd, &leave_sess_request, sizeof(message), 0);
+                    
+                    //Remove the session
+                    // for (int i = 0; i<MAXNUMSESSIONS; i++){
+                    //     if (strcmp(in_sessions[i], session_name)==0){
+                    //         for (int j = i; j<MAXNUMSESSIONS-1; j++){
+                    //             strcpy(in_sessions[j], in_sessions[j+1]);
+                    //         }
+                    //         sessionNum--;
+                    //         continue;
+                    //     }
+                    // }
+                    // if(in_session == NULL){ 
+                    //     in_session = (char *) malloc(MAX_NAME);
+                    // }
+                    //strcpy(in_session, session_name);
+
+
+                    recv(sockfd, &response, sizeof(message), 0);
+                    if (strcmp((char*)response.data, "You have left the session.\n")==0){
+                        sessionNum--;
+                    }
+                    printf("%s", response.data);
+                
+                }
+
+            }
+        }
+        else if(strcmp(command, LEAVE_ALL_SESSIONS_COMMAND) == 0){
+            if(sockfd == -1){
+                printf("You are not connected to any server yet. Login first!\n");
+            }else{
                 if(arg >= 2){
                     printf("You entered too many arguments, try again\n");
                 } else{
                     //Leave session
-                    printf("Client %s leaving session.\n", username);
-                    message leave_sess_request;
-                    leave_sess_request.type = LEAVE_SESS;
-                    strcpy((char *)leave_sess_request.source, username);
-                    strcpy((char *)leave_sess_request.data, "");//session name is not needed
-                    send(sockfd, &leave_sess_request, sizeof(message), 0);
-                    free(in_session);
-                    in_session = NULL;
+                    printf("Client %s leaving all sessions.\n", username);
+                    message leave_all_sess_request, response;
+                    leave_all_sess_request.type = LEAVE_ALL_SESS;
+                    strcpy((char *)leave_all_sess_request.source, username);
+                    strcpy((char *)leave_all_sess_request.data, "");//session name is not needed
+                    send(sockfd, &leave_all_sess_request, sizeof(message), 0);
+
+                    // for (int i = 0; i<MAXNUMSESSIONS; i++){
+                    //     free(in_sessions[i]);
+                    // }
+                    // free(in_sessions);
+                    // in_sessions = NULL;
+
+                    recv(sockfd, &response, sizeof(message), 0);
+                    if (strcmp((char*)response.data, "You have left all sessions.\n")==0){
+                        sessionNum--;
+                    }
+                    printf("%s", response.data);
+
                 }
             }
         }
@@ -167,19 +246,29 @@ int main(int argc, char** argv){
                 }
                 if(arg > 2){
                     printf("You entered too many arguments, try again\n");
+                    //continue;
                 }
                 else if(arg<2){
                     printf("You entered too few arguments, try again\n");
+                    //continue;
                 }
                 else{
                     //printf("Sending message to create session %s\n",session_name);
-                    message new_sess_request;
+                    message new_sess_request, response;
                     new_sess_request.type = NEW_SESS;
                     strcpy((char *)new_sess_request.source, username);
                     strcpy((char *)new_sess_request.data, session_name);
                     send(sockfd, &new_sess_request, sizeof(message), 0);
-                    in_session = (char *) malloc(MAX_NAME);
-                    strcpy(in_session, session_name);
+                    //in_session = (char *) malloc(MAX_NAME);
+                    
+                    recv(sockfd, &response, sizeof(message), 0);
+                    if (strcmp((char*)response.data, "Created and joined the session.\n")==0){
+                        sessionNum++;
+                        printf("Created and joined the session. You are now in %d session(s).\n", sessionNum);
+                    }else{
+                        printf("%s", (char*)response.data);
+                    }
+                    //strcpy(in_sessions[sessionNum], session_name);
                 }
             }
         }
@@ -187,6 +276,7 @@ int main(int argc, char** argv){
             if(sockfd == -1){
                 printf("You are not connected to a server yet!\n");
                 fflush(stdout);
+                //continue;
             }
             else{
                 message list_request, response;
@@ -249,7 +339,7 @@ int main(int argc, char** argv){
             if(sockfd == -1){
                 printf("You aren't connected to a server yet\n");
             }
-            else if(in_session == NULL){
+            else if(sessionNum == -1){
                 printf("You haven't joined any session yet\n");
             }
             else{
@@ -282,10 +372,10 @@ int main(int argc, char** argv){
         
         if(strcmp(buffer, QUIT_COMMAND) == 0 && sockfd != -1){
             message quit_request;
-            if(in_session != NULL){
-                quit_request.type = LEAVE_SESS;
+            if(sessionNum != -1){
+                quit_request.type = LEAVE_ALL_SESS;
                 strcpy((char *)quit_request.source, username);
-                strcpy((char *)quit_request.data, in_session);
+                strcpy((char *)quit_request.data, ""); //Quits all sessions
                 send(sockfd, &quit_request, sizeof(message), 0);
             }
             if(sockfd != -1){
@@ -296,7 +386,7 @@ int main(int argc, char** argv){
             }
         }
     }
-    free(in_session);
+    //free(in_session);
     free(username);
     free(buffer);
     return 0;

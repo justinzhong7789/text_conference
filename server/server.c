@@ -142,21 +142,48 @@ int main(int argc, char** argv){
 							printf("Server handling join request.\n");
 							char* sessionName = (char*)buffer.data;
 							char* clientID = (char*)buffer.source; //username
-							printf("Session name %s, client ID %s.\n",sessionName, clientID);
+							printf("Session name %s, client ID %s.\n", sessionName, clientID);
 
 							//Look for the session of the client
-							if (findSessionOfClient(sessionList, &curSessionSize, clientID) !=-1){
-								printf("Client already joined a session\n");
-								continue;
+							int* findResult = findSessionsOfClient(sessionList, &curSessionSize, clientID);
+							int joinedSession = 0;
+							for(int i = 1; i<findResult[0];i++){//findResult[0] is the size of this array
+								if (sessionList[findResult[i]]->sessionName==sessionName){
+									joinedSession =1;
+									continue;
+								}
 							} 
+							if (joinedSession==1){
+								printf("Client already joined this session.\n");
+								message response;
+								response.type = JOIN_SESS_ACK;
+								strcpy((char *)response.source, SERVER);
+								strcpy((char *)response.data, "Client already joined this session.\n");
+								int clientFd = sockfd_of_client(connected_clients_list, clientID);
+								send(clientFd, &response, sizeof(message), 0);
+								continue;
+							}
+
 							if(!clientAlreadyConnected(connected_clients_list, clientID)){
-								printf("Client isn't connected\n");
+								printf("Client isn't connected.\n");
+								message response;
+								response.type = JOIN_SESS_ACK;
+								strcpy((char *)response.source, SERVER);
+								strcpy((char *)response.data, "Client isn't connected.\n");
+								int clientFd = sockfd_of_client(connected_clients_list, clientID);
+								send(clientFd, &response, sizeof(message), 0);
 								continue;
 							}
 							//Look for session in existing list
 							int sessionIdx = findSessionByName (sessionList, &curSessionSize, sessionName);
 							if (sessionIdx==-1){
 								printf("Session does not exist.\n");
+								message response;
+								response.type = JOIN_SESS_ACK;
+								strcpy((char *)response.source, SERVER);
+								strcpy((char *)response.data, "Session does not exist.\n");
+								int clientFd = sockfd_of_client(connected_clients_list, clientID);
+								send(clientFd, &response, sizeof(message), 0);
 								continue;
 							}
 							//Insert sockID to the session
@@ -176,25 +203,37 @@ int main(int argc, char** argv){
 							printf("-----------Session List ---------\n");
 							printAllSessions(sessionList, &curSessionSize);
 							printf("---------------------------------\n");
-
+							
+							message response;
+							response.type = JOIN_SESS_ACK;
+							strcpy((char *)response.source, SERVER);
+							strcpy((char *)response.data, "Client joined the session.\n");
+							int clientFd = sockfd_of_client(connected_clients_list, clientID);
+							send(clientFd, &response, sizeof(message), 0);
 						}
 						else if(buffer.type == NEW_SESS){
 							//Need to modify message in client
 							char* sessionName = (char*)buffer.data;
 							char* clientID = (char*)buffer.source;
 							//Validate Client ID
-							if (strcmp(clientID, "")==0){
-								printf("Client ID is empty.\n");
-								continue;
-							}
+							// if (strcmp(clientID, "")==0){
+							// 	printf("Client ID is empty.\n");
+							// 	continue;
+							// }
 							//Look for client in already connected sessions
-							if (findSessionOfClient(sessionList, &curSessionSize, clientID)!=-1){
-								printf("Client already joined a session.\n");
-								continue;
-							}
+							// if (findSessionOfClient(sessionList, &curSessionSize, clientID)!=-1){
+							// 	printf("Client already joined a session.\n");
+							// 	continue;
+							// }
 							//Look for the session in the existing list
 							if (findSessionByName(sessionList, &curSessionSize, sessionName)!=-1){
 								printf("Session exists.\n");
+								message response;
+								response.type = NEW_SESS_ACK;
+								strcpy((char *)response.source, SERVER);
+								strcpy((char *)response.data, "Session exists.\n");
+								int clientFd = sockfd_of_client(connected_clients_list, clientID);
+								send(clientFd, &response, sizeof(message), 0);
 								continue;
 							}
 							//Session has not been created
@@ -218,6 +257,12 @@ int main(int argc, char** argv){
 							//Insert to the session list
 							if (insertSession(sessionList, &curSessionSize, newSession)==-1){
 								printf("Can not insert.\n");
+								message response;
+								response.type = NEW_SESS_ACK;
+								strcpy((char *)response.source, SERVER);
+								strcpy((char *)response.data, "Session list is full.\n");
+								int clientFd = sockfd_of_client(connected_clients_list, clientID);
+								send(clientFd, &response, sizeof(message), 0);
 								continue;
 							}
 							printf("Client %s created and joined session %s.\n", clientID, sessionName);
@@ -225,17 +270,33 @@ int main(int argc, char** argv){
 							printAllSessions(sessionList, &curSessionSize);
 							printf("---------------------------------\n");
 							
+							//Send Ack
+							message response;
+							response.type = NEW_SESS_ACK;
+							strcpy((char *)response.source, SERVER);
+							strcpy((char *)response.data, "Created and joined the session.\n");
+							int clientFd = sockfd_of_client(connected_clients_list, clientID);
+							send(clientFd, &response, sizeof(message), 0);
 						}
-						else if(buffer.type == LEAVE_SESS || buffer.type == QUIT){
+						else if (buffer.type == LEAVE_SESS){//Leave one session
 							char* clientID = (char*)buffer.source;
+							char* sessionName = (char*)buffer.data;
 							//Look for client in already connected sessions
-							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, clientID);
+							int sessionIdx = findSessionByName(sessionList, &curSessionSize, sessionName);
 							if (sessionIdx==-1){
-								printf("Client did not connect to any session.\n");
+								printf("Client %s did not connect to any session.\n", clientID);
+								//Send NACK
+								message response;
+								response.type = LEAVE_SESS_ACK;
+								strcpy((char *)response.source, SERVER);
+								strcpy((char *)response.data, "You did not connect to any session.\n");
+								int clientFd = sockfd_of_client(connected_clients_list, clientID);
+								send(clientFd, &response, sizeof(message), 0);
 								continue;
 							}
-							printf("Client %s leaving the session.\n", clientID);
-							int clientIdx = findIdxOfClient(sessionList, clientID, sessionIdx);//helper function in session.c
+							printf("Client %s is leaving session %s.\n", clientID, sessionName);
+
+							int clientIdx = findIdxOfClient(sessionList, clientID, sessionIdx);//Need to change to find all
 							removeClientID(sessionList, clientIdx, sessionIdx);
 
 							//Free session node if all clients have left
@@ -245,10 +306,63 @@ int main(int argc, char** argv){
 							printf("-----------Session List ---------\n");
 							printAllSessions(sessionList, &curSessionSize);
 							printf("---------------------------------\n");
+
+							//Send Ack
+							message response;
+							response.type = LEAVE_SESS_ACK;
+							strcpy((char *)response.source, SERVER);
+							strcpy((char *)response.data, "You have left the session.\n");
+							int clientFd = sockfd_of_client(connected_clients_list, clientID);
+							send(clientFd, &response, sizeof(message), 0);
+						}
+						else if(buffer.type == LEAVE_ALL_SESS || buffer.type == QUIT){ //Leave all sessions
+							char* clientID = (char*)buffer.source;
+							//Look for client in already connected sessions
+							int* sessionIdx = findSessionsOfClient(sessionList, &curSessionSize, clientID);
+							if (sessionIdx[0]==0){
+								printf("Client %s did not connect to any session.\n", clientID);
+								//Send NACK
+								message response;
+								response.type = LEAVE_ALL_SESS_ACK;
+								strcpy((char *)response.source, SERVER);
+								strcpy((char *)response.data, "You did not connect to any session.\n");
+								int clientFd = sockfd_of_client(connected_clients_list, clientID);
+								send(clientFd, &response, sizeof(message), 0);
+								continue;
+							}
+							for (int i = 1; i<sessionIdx[0]; i++){
+								printf("Client %s is leaving session %s.\n", clientID, sessionList[sessionIdx[i]]->sessionName);
+								int clientIdx = findIdxOfClient(sessionList, clientID, sessionIdx[i]);
+								removeClientID(sessionList, clientIdx, sessionIdx[i]);
+
+								//Free session node if all clients have left
+								if (sessionList[sessionIdx[i]]->curNumClients==0){
+									deleteSession(sessionList, &curSessionSize, sessionIdx[i]);
+								}
+							}
+							printf("-----------Session List ---------\n");
+							printAllSessions(sessionList, &curSessionSize);
+							printf("---------------------------------\n");
+
+							//Send Ack
+							message response;
+							response.type = LEAVE_SESS_ACK;
+							strcpy((char *)response.source, SERVER);
+							strcpy((char *)response.data, "You have left all sessions.\n");
+							int clientFd = sockfd_of_client(connected_clients_list, clientID);
+							send(clientFd, &response, sizeof(message), 0);
 							
 						}
 						else if(buffer.type == MESSAGE){
-							int sessionIdx = findSessionOfClient(sessionList, &curSessionSize, (char *)buffer.source); //Find the index of session client is in
+							//check if client is in any session
+							//char* clientID = (char*)buffer.source;
+							//char* clientMsg = (char*)buffer.data;
+							//message context;
+							//strcpy((char *)context.source, clientID);
+							//strcpy((char *)context.data, clientMsg);
+							//context.size = strlen(clientMsg);
+							//Todo: change buffer data to only consider the first word
+							int sessionIdx = findSessionByName(sessionList, &curSessionSize, (char*)buffer.data);
 							if (sessionIdx==-1){
 								printf("Client did not connect to any session.\n");
 								continue;
@@ -256,8 +370,10 @@ int main(int argc, char** argv){
 							printf("%s said: %s--\n", buffer.source, buffer.data);
 									
 							//Iterate through all client IDs in this session
+							//Todo: change to message to only one session
 							for (int n=0; n<sessionList[sessionIdx]->curNumClients; n++){
-								
+								//char* curClientID = sessionList[sessionIdx]->clientIDs[n];
+								//send the message to this client
 								if(strcmp(sessionList[sessionIdx]->clientIDs[n], (char *)buffer.source) != 0){
 									message temp;
 									temp.type = MESSAGE;
@@ -266,6 +382,8 @@ int main(int argc, char** argv){
 									printf("sending to : %s\n", sessionList[sessionIdx]->clientIDs[n]);
 									send(sessionList[sessionIdx]->sockfds[n], &temp, sizeof(message),0);
 								}
+								//sockfd invalid, broken pipe
+								//send(sessionList[sessionIdx]->sockfds[n], &context, sizeof(message),0);
 							}
 						}
 
@@ -313,35 +431,6 @@ int main(int argc, char** argv){
 							list_response.data[loc] = '\0';
 							send(i, &list_response, sizeof(message), 0);
 							
-						}
-						else if(buffer.type == INVITATION){
-							char *client_to_invite, *session_to_invite;
-							message response;
-							strcpy((char *)response.source, SERVER);
-							client_to_invite = strtok((char *)buffer.data, SPACE);
-							session_to_invite = strtok(NULL, SPACE);
-							int from_sock = sockfd_of_client(connected_clients_list, (char *)buffer.source);
-							response.data[0] = '\0';
-							if(!clientAlreadyConnected(connected_clients_list, client_to_invite)){
-								strcpy((char *)response.data, "Client is not connected to me.\n");
-							}
-							else if(findSessionByName (sessionList, &curSessionSize, session_to_invite) == -1){
-								strcpy((char *)response.data, "Session does not exist\n");
-							}
-							else{
-								int target_client_sockfd = sockfd_of_client(connected_clients_list, client_to_invite);
-								
-								message invitation;
-								strcpy((char *)invitation.source, (char *)buffer.source);
-								strcpy((char *)invitation.data, session_to_invite);
-								invitation.type = INVITATION;
-								send(target_client_sockfd, &invitation, sizeof(message), 0);
-								
-							}
-							if(strlen((char *)response.data) == 0){
-								strcpy((char *)response.data, "Invitation sent\n");
-							}
-							send(from_sock, &response, sizeof(message), 0);
 						}
 						else {
 							perror("Message type not recognized");
