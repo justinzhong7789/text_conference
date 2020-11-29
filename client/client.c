@@ -246,11 +246,9 @@ int main(int argc, char** argv){
                 }
                 if(arg > 2){
                     printf("You entered too many arguments, try again\n");
-                    //continue;
                 }
                 else if(arg<2){
                     printf("You entered too few arguments, try again\n");
-                    //continue;
                 }
                 else{
                     //printf("Sending message to create session %s\n",session_name);
@@ -276,7 +274,6 @@ int main(int argc, char** argv){
             if(sockfd == -1){
                 printf("You are not connected to a server yet!\n");
                 fflush(stdout);
-                //continue;
             }
             else{
                 message list_request, response;
@@ -347,12 +344,15 @@ int main(int argc, char** argv){
                     printf("Your username is unclear\n");
                 }
                 else{
-                    message chat;
+                    message chat, response;
                     chat.type = MESSAGE;
                     strcpy((char *)chat.source, username);
                     strcpy((char *)chat.data, buffer);
                     send(sockfd, &chat, sizeof(message), 0);
                     printf("You said: %s\n", buffer);
+
+                    recv(sockfd, &response, sizeof(message), 0);
+                    printf("%s", response.data);
                 }
             }
         }

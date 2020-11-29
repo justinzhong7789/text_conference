@@ -357,19 +357,35 @@ int main(int argc, char** argv){
 						}
 						else if(buffer.type == MESSAGE){
 							//check if client is in any session
-							//char* clientID = (char*)buffer.source;
+							char* clientID = (char*)buffer.source;
 							//char* clientMsg = (char*)buffer.data;
 							//message context;
 							//strcpy((char *)context.source, clientID);
 							//strcpy((char *)context.data, clientMsg);
 							//context.size = strlen(clientMsg);
-							//Todo: change buffer data to only consider the first word
-							int sessionIdx = findSessionByName(sessionList, &curSessionSize, (char*)buffer.data);
+
+							//The first word is the session name
+							char fullMessage[strlen((char*)buffer.data)];
+							strcpy(fullMessage, (char*)buffer.data);
+							char* sessionName = strtok((char*)buffer.data, ": ");
+							printf("Session name is: %s\n", sessionName);
+							//Get the rest of the message
+							char subStr[strlen(fullMessage)-strlen(sessionName)-1];
+							memcpy(subStr, &fullMessage[strlen(sessionName)+2], strlen(fullMessage)-strlen(sessionName)-1);//Split at :_
+							subStr[strlen(fullMessage)-strlen(sessionName)-1] = '\0';
+
+							int sessionIdx = findSessionByName(sessionList, &curSessionSize, sessionName);
 							if (sessionIdx==-1){
-								printf("Client did not connect to any session.\n");
+								printf("Session Name is not found.\n");
+								message response;
+								response.type = MESSAGE_ACK;
+								strcpy((char *)response.source, SERVER);
+								strcpy((char *)response.data, "Session Name is not found.\n");
+								int clientFd = sockfd_of_client(connected_clients_list, clientID);
+								send(clientFd, &response, sizeof(message), 0);
 								continue;
 							}
-							printf("%s said: %s--\n", buffer.source, buffer.data);
+							printf("%s said: %s\n", buffer.source, subStr);
 									
 							//Iterate through all client IDs in this session
 							//Todo: change to message to only one session
@@ -380,12 +396,17 @@ int main(int argc, char** argv){
 									message temp;
 									temp.type = MESSAGE;
 									strcpy((char *)temp.source, (char *)buffer.source);
-									strcpy((char *)temp.data, (char *)buffer.data);
+									strcpy((char *)temp.data, (char *)subStr);
 									printf("sending to : %s\n", sessionList[sessionIdx]->clientIDs[n]);
 									send(sessionList[sessionIdx]->sockfds[n], &temp, sizeof(message),0);
+									//Send message ACK
+									message response;
+									response.type = MESSAGE_ACK;
+									strcpy((char *)response.source, SERVER);
+									strcpy((char *)response.data, "Message was sent.\n");
+									int clientFd = sockfd_of_client(connected_clients_list, clientID);
+									send(clientFd, &response, sizeof(message), 0);
 								}
-								//sockfd invalid, broken pipe
-								//send(sessionList[sessionIdx]->sockfds[n], &context, sizeof(message),0);
 							}
 						}
 
