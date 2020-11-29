@@ -203,7 +203,7 @@ int main(int argc, char** argv){
 							printf("-----------Session List ---------\n");
 							printAllSessions(sessionList, &curSessionSize);
 							printf("---------------------------------\n");
-							
+
 							message response;
 							response.type = JOIN_SESS_ACK;
 							strcpy((char *)response.source, SERVER);
@@ -330,14 +330,16 @@ int main(int argc, char** argv){
 								send(clientFd, &response, sizeof(message), 0);
 								continue;
 							}
-							for (int i = 1; i<sessionIdx[0]; i++){
-								printf("Client %s is leaving session %s.\n", clientID, sessionList[sessionIdx[i]]->sessionName);
-								int clientIdx = findIdxOfClient(sessionList, clientID, sessionIdx[i]);
-								removeClientID(sessionList, clientIdx, sessionIdx[i]);
+							for (int i = 0; i<sessionIdx[0]; i++){
+								//Need to find session again, because session indices may change
+								int* thisSessionIdx = findSessionsOfClient(sessionList, &curSessionSize, clientID);
+								printf("Client %s is leaving session %s.\n", clientID, sessionList[thisSessionIdx[1]]->sessionName);
+								int clientIdx = findIdxOfClient(sessionList, clientID, thisSessionIdx[1]);
+								removeClientID(sessionList, clientIdx, thisSessionIdx[1]);
 
 								//Free session node if all clients have left
-								if (sessionList[sessionIdx[i]]->curNumClients==0){
-									deleteSession(sessionList, &curSessionSize, sessionIdx[i]);
+								if (sessionList[thisSessionIdx[1]]->curNumClients==0){
+									deleteSession(sessionList, &curSessionSize, thisSessionIdx[1]);
 								}
 							}
 							printf("-----------Session List ---------\n");
