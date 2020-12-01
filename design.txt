@@ -1,0 +1,11 @@
+To leave one session, specify its session ID. The formate for this command is: 
+/leavesession <session ID>
+
+We have also allowed client to leave all sessions using the command "leaveallsesssions". The format for this command is: 
+/leaveallsessions
+
+When sending message, client needs to specify a session ID first. The format for sending messages is:
+ <session ID>: <message>
+Only the message part is forwarded to other clients in the specified session. 
+
+

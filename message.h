@@ -39,8 +39,15 @@ enum type{
     MESSAGE =10,
     QUERY = 11,
     QU_ACK = 12,
-    QUIT,
-    INVITATION
+    QUIT = 13,
+    INVITATION = 14,
+    LEAVE_ALL_SESS = 15,
+    NEW_SESS_ACK = 16,
+    JOIN_SESS_ACK = 17,
+    LEAVE_SESS_ACK = 18,
+    LEAVE_ALL_SESS_ACK = 19,
+    MESSAGE_ACK = 20
+
 };
 
 char SPACE[] = " ";

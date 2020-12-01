@@ -32,8 +32,6 @@ typedef struct connected_client{
     char *user_id;
     int fd;
     struct sockaddr_storage client_info;
-    //keeps track of client's time to live, in micro seconds
-    int ttl;
     struct connected_client *next;
 }connected_client;
 

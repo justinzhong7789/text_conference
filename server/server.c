@@ -38,10 +38,8 @@ int main(int argc, char** argv){
 	FD_ZERO(&read_fds);
 	FD_SET(sockfd, &master);
 	fdmax = sockfd;
-	clock_t time_elapsed;
 	while (1)
 	{
-		time_elapsed = clock();
 		printf("Server: waiting for incoming requests...\n");
 		read_fds = master;
 		if(select(fdmax+1, &read_fds, NULL, NULL,NULL) == -1){
@@ -351,30 +349,6 @@ int main(int argc, char** argv){
 
 
 				}
-				connected_client *tra;
-				for(tra = *connected_clients_list; tra!= NULL; tra = tra->next){
-					if(i == tra->fd){
-						tra->ttl = DEFAULT_TTL;
-					}
-				}
-			}
-		}
-
-		//update ttl
-		time_elapsed = clock() - time_elapsed;
-		connected_client *tra;
-		for(tra = *connected_clients_list; tra!= NULL; tra = tra->next){
-			if(tra->ttl != DEFAULT_TTL){
-				tra->ttl -= (int) time_elapsed;
-			}
-		}
-
-
-		//check for timedout clients and disconnect them
-		for(tra = *connected_clients_list; tra!= NULL; tra = tra->next){
-			if(tra->ttl <= 0){
-				
-				
 			}
 		}
 
