@@ -20,6 +20,7 @@
 #define CHAR_SIZE 1
 #define BACK_LOG 10
 #define SERVER "SERVER"
+#define DEFAULT_TTL 120000000
 
 void writeToDatabase(char *username, char *password);
 int checkPW(char *username, char *inputpw);
@@ -31,6 +32,8 @@ typedef struct connected_client{
     char *user_id;
     int fd;
     struct sockaddr_storage client_info;
+    //keeps track of client's time to live, in micro seconds
+    int ttl;
     struct connected_client *next;
 }connected_client;
 
@@ -161,6 +164,7 @@ connected_client *create_client(int fd_, struct sockaddr_storage storage_){
     new_node->user_id = (char *)malloc(MAX_NAME);
     new_node->client_info = storage_;
     new_node->next = NULL;
+    new_node->ttl = 190000000;
     return new_node;
 }
 
