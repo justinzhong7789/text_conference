@@ -455,6 +455,36 @@ int main(int argc, char** argv){
 							send(i, &list_response, sizeof(message), 0);
 							
 						}
+						
+						else if(buffer.type == INVITATION){
+							char *client_to_invite, *session_to_invite;
+							message response;
+							strcpy((char *)response.source, SERVER);
+							client_to_invite = strtok((char *)buffer.data, SPACE);
+							session_to_invite = strtok(NULL, SPACE);
+							int from_sock = sockfd_of_client(connected_clients_list, (char *)buffer.source);
+							response.data[0] = '\0';
+							if(!clientAlreadyConnected(connected_clients_list, client_to_invite)){
+								strcpy((char *)response.data, "Client is not connected to me.\n");
+							}
+							else if(findSessionByName (sessionList, &curSessionSize, session_to_invite) == -1){
+								strcpy((char *)response.data, "Session does not exist\n");
+							}
+							else{
+								int target_client_sockfd = sockfd_of_client(connected_clients_list, client_to_invite);
+
+								message invitation;
+								strcpy((char *)invitation.source, (char *)buffer.source);
+								strcpy((char *)invitation.data, session_to_invite);
+								invitation.type = INVITATION;
+								send(target_client_sockfd, &invitation, sizeof(message), 0);
+
+							}
+							if(strlen((char *)response.data) == 0){
+								strcpy((char *)response.data, "Invitation sent\n");
+							}
+							send(from_sock, &response, sizeof(message), 0);
+						}
 						else {
 							perror("Message type not recognized");
 						}
