@@ -1,3 +1,9 @@
+The command for invite is:
+/invite <client ID> <session ID>
+After receiving a invitation, the client can press "y" or "n" to accept or reject the invitation. 
+We implemented invite by sending a message to the invited client from the server. If the client responds "y", then send a package back to the server. 
+The server will then add this client to the session specified by the inviter. 
+
 To leave one session, specify its session ID. The formate for this command is: 
 /leavesession <session ID>
 
@@ -7,5 +13,6 @@ We have also allowed client to leave all sessions using the command "leaveallses
 When sending message, client needs to specify a session ID first. The format for sending messages is:
  <session ID>: <message>
 Only the message part is forwarded to other clients in the specified session. 
+The server separates session ID from the rest of the message using the delimiter ": ".
 
 
